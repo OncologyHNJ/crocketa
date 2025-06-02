@@ -1,0 +1,12 @@
+custom_logo: '.figs/crocketa_final.png'
+custom_logo_url: 'https://github.com/OncologyHNJ/crocketa/'
+custom_logo_title: 'CROCKETA single-cell analysis pipeline'
+
+title: "Ramirez Lab (FIBHNJ) Bioinformatics Unit Single-Cell sequencing QC."
+subtitle: "Summary of sequencing data pre and post-alignment."
+intro_text: ""
+report_comment: ""
+
+report_header_info:
+    - Contact E-mail: 'xurde.garcia.martinez@gmail.com'
+    - Application Type: 'Single Cell RNA-seq'

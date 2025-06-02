@@ -1,0 +1,23 @@
+channels:
+    - conda-forge
+    - bioconda
+
+dependencies:
+    - r-base=4.3
+    - libgfortran
+    - r-seurat
+    - r-ggplot2
+    - bioconductor-screpertoire=1.10.0
+    - r-reticulate
+    - r-ggraph
+    - r-writexl
+    - r-spatstat
+    - r-matrix
+    - r-patchwork
+    - r-future
+    - r-dplyr=1.1.4
+    - r-ggvenn
+    - r-immunarch
+    - r-upsetr
+    - r-purrr
+    # - r-complexupset

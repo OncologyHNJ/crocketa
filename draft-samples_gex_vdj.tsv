@@ -1,0 +1,3 @@
+sample	sample_TCR	sample_BCR	vdj_fqPATH_TCR	vdj_fqPATH_BCR	condition	patient
+sample_1	sample_1_TCR	NULL	/path/to/sample_1_TCR/	NULL	A	p1
+sample_2	sample_2_TCR	NULL	/path/to/sample_2_TCR/	NULL	B	p1

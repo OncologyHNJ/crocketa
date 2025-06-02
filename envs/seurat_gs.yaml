@@ -1,0 +1,16 @@
+channels:
+    - conda-forge
+    - bioconda
+
+dependencies:
+    - libgfortran
+    - r-base=4.3
+    - r-seurat
+    - r-reticulate
+    - r-ggplot2
+    - r-clustree
+    - r-writexl
+    - r-patchwork
+    - bioconductor-qusage
+    - r-spatstat
+    - r-matrix

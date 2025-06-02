@@ -1,0 +1,22 @@
+channels:
+    - bu_cnio
+    - conda-forge
+    - bioconda
+
+dependencies:
+    - r-base
+    - r-lisi
+    - libgfortran
+    - r-seurat=3.2.3
+    - r-reticulate
+    - umap-learn
+    - r-ggplot2
+    - r-clustree
+    - r-writexl
+    - r-spatstat
+    - r-spatstat.utils
+    - r-matrix=1.3.2
+    - r-seuratdisk
+    - r-seuratobject
+    - r-patchwork
+    - r-igraph>=1.3

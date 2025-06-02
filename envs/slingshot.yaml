@@ -1,0 +1,15 @@
+channels:
+    - conda-forge
+    - bioconda
+
+dependencies:
+    - r-base=4.3
+    - r-seurat
+    - bioconductor-slingshot
+    - bioconductor-delayedmatrixstats
+    - r-rgl
+    - r-rmarkdown
+    - r-gam
+    - r-pheatmap
+    - r-spatstat
+    - r-openxlsx

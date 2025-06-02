@@ -1,0 +1,236 @@
+# Samples.tsv: path or URL to sample sheet (TSV format, columns: sample, condition, ...).
+samples: /path/to/samples.tsv
+
+# Units.tsv: path or URL to sequencing unit sheet (TSV format, 2 different formats.
+units: /path/to/units.tsv
+
+# input type: this variable is used to specify the input files nature ("matrix" or "fastq"). 
+input_type: "fastq"
+
+# technology:
+# "10x", "Drop-seq" or "custom" if input_type is fastq.
+# "10x" or "standard" if input_type is matrix.
+technology: "10x"  
+
+# technology_version: only if using 10x technology (fastq)
+technology_version: "v2"
+
+# Output and log files paths
+outdir: "/path/to/vdj_gex_out"
+logdir: "/path/to/vdj_gex_log"
+
+# Graphics availability.
+graphics: True
+
+# keeping the same random seed allows the programs that use it to generate the same results
+random_seed:  4848
+
+# gene case format: uppercase (TP53), lowercase (tp53), and titlecase (Tp53)
+# depends on organism
+case: "uppercase"
+
+# If there are to many samples, R might yield an error when writing count data in tsv files, in that case set as False.
+# Possible values: True/False
+write_table: False
+
+# Perform the analysis using only single samples (for merged or integrated)
+single_samples: True
+
+# genomic reference sequences and annotations
+ref:
+    annotation: "/path/to/ref/add_your_ref_assembly.annotation.gtf"
+    fasta: "/path/to/ref/add_your_ref_assembly.genome.fa"
+    idx: "/path/to/ref/add_your_ref_index/" # STAR aligner index path (auto generated if not already present)
+    cellranger_ann: "/path/to/ref/references_cellranger/refdata-gex-GRCh38-2024-A"
+    cellranger_vdj: "/path/to/ref/references_cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-7.1.0"
+
+# barcodes whitelist (10x only)
+whitelist: "/path/to/res/whitelists/737K-august-2016.txt"  
+
+parameters:
+    cellranger:
+        enabled: True
+    seurat_qc: # step 1: Examine your results with the most commonly used single-cell QC metrics.
+        min_cells_per_gene: 3
+    seurat_postqc: # step 2: implement your filters in order to get quality cells using the information gathered in step 1.
+        # NOTE: leave value empty to ignore limit
+        min_feat: 500 # minimum number of unique genes detected per cell
+        max_feat: NULL # maximum number of unique genes detected per cell
+        min_count: NULL # minimum number of counts per cell
+        max_count: NULL # maximum number of counts per cell
+        mit_pct: 20 # minimum percentaje of reads mapping to the mitochondrial genome
+        ribo_pct: 40 # minimum percentaje of reads mapping to the ribosomal genome
+    seurat_filter: #[OPTIONAL] step 2.1: filter out cells based on positive or negative marker gene(s) (comment to ignore)
+        genes: # ["CD3", "CD4"] #gene or list of genes used to filter the dataset
+        threshold: # 5 # expression level threshold (number of counts/cell)
+        filter_out: False # True: keep cells with expression higher than *threshold*. False: the opposite.
+    seurat_DoubletFinder:  #[OPTIONAL] step 2.6: Find & filter predicted doublets
+        enabled: True
+    seurat_merge: #[OPTIONAL] step 2.5: merging all samples
+        enabled: True
+    seurat_normalization: # step 3: normalization and generation of jackstraw and elbow plots 
+        norm_type: "standard" # normalization strategy ("SCT" or "standard")
+        variable_features: 20 # PCA calculated using N highly variable genes. Set to NULL to calculate using all genes. 
+        regress_out:
+            enabled: False # if True, regress out biological or technical effects stored in the metadata table of the Seurat object
+            vars_to_regress: "percent.mt" # vars_to_regress: some variables can be regressed out to minimize their effect on the samples. It needs to be written in a python list format (more than one variable).
+        regress_cell_cycle: False # if True, regress out the cell cycle effect (check out the cell cycle plot first)
+        regress_merge_effect: True # if True, regress out the differences between the merged samples.
+    seurat_integration: #[OPTIONAL] step 3B: integration (equivalent to the normalization step), but creates an integrated object)
+        enabled: False
+    seurat_find_clusters: # step 4: clustering of your data
+        principal_components: 20 # this number should be set based on the output of normalization step (elbowplot)
+        resolutions: [0.1, 0.2, 0.4, 0.8, 1.2] # the resolution value(s) will set the granularity of the clustering (typicaly between 0.4-1.2).
+        k_neighbors: 20 # number of neighbors (k) used to generate the SNN graph
+        batch_metadata: "condition" # specify your metadata column (condition). Computes the Local Inverse Simpson’s Index (LISI) for all variables of interest. Specially recommended for measuring integration accuracy.
+    seurat_scRepertoire: # [OPTIONAL] step 4b: add clonotype data if available
+        enabled: True
+        ident_cond: ["condition","0.8"] # specify your metadata column (condition) of interest & (if wished) resolution to be used in this stage of the analysis
+        input_csv: NULL # path to input contig_annotations csv files to import names as: filtered_contig_annotations.csv
+        cells: ["T-AB"] # "T-AB" = Tcells, alpha-beta TCR // "T-GD" = Tcells, gamma-delta TCR // "B-cells" = Bcells, BCR. ALL OPTIONS CAN BE COMBINED i.e. ["T-AB", "T-GD", "B-cells"]
+        relative: True # set to True if proportional values are defined in cloneTypes (1e-04, 0.01, etc)
+        cloneTypes: [0.0001, 0.001, 0.01, 0.1, 1] # values for clonetypes (absolute) for: Single, Small, Medium, Large, Hyperexpanded
+        # if relative = True then cloneTypes: [1e-04, 0.001, 0.01, 0.1, 1] 
+        # if relative = False then cloneTypes: [1, 5, 20, 100, 500] (e.g.)
+        n_CTaa: [2,5,10] # number of TOP prominent AA sequences to plot (TOP most frequent clonotypes)
+        vdjdb_ref: "ref/vdjdb.slim.txt.gz"
+        mcpas_ref: "ref/McPAS-TCR.csv.gz"
+    seurat_degs: # [OPTIONAL] step 5: marker and differentially expressed genes calculation
+        enabled: True
+        selected_cond: ["seurat_clusters", "condition", "0.8"] # [0.4, "condition"] # resolution or condition to be used in the downstream analysis. Resolutions can be written as follows: 0.2, 0.4... Conditions must be character vectors.
+        ranking: True # gene ranking for all the genes to perform as GSEA
+        test: "wilcox" # statistical test to use for the DE analysis (see Seurat's FindMarkers function options)
+    seurat_annotation_AZIMUTH: # Automatic annotation through Azimuth, but requires seurat5 (different environment)
+        enabled: False
+        ident_cond: 0.8
+        reference: "pbmcref" # reference to install and employ for azimuth algorithm
+    seurat_annotation: # Automatic annotation is performed through scType & SingleR
+        enabled: True
+        ident_cond: 0.8
+        interest_feat: ["TRAC", "TRBC1", "TRBC2", "PTPRC", "IL7R", "CD3D", "CD3E", "CD3G", "CD4", "CD8A", "CD8B", "CD8B2", "DNTT", "VPREB1", "VPREB3", "CD79B", "CD79A", "PDCD1", "ENTPD1", "MKI67"] # NULL to skip single gene exploration. "TRAC", "TRBC1", "TRBC2" (specific for 5'TCR, expression of receptor); "PTPRC" (CD45, HEMATOPOIETIC); "IL7R", "CD3D", "CD3E", "CD3G" (Tcells); "CD4" (CD4 Tcells), "CD8A", "CD8B", "CD8B2" (CD8 Tcells); "DNTT", "VPREB1", "VPREB3", "CD79B", "CD79A", (Bcells); "PDCD1", "ENTPD1", (PD1 / anti-PD1 expression); "MKI67", (Proliferation marker)
+        gmx_dir: NULL #"/home/user/gonzalo/" # path to folder where signatures of interest are defined in gmx format files to assess gene expression
+        tissue_scType: "IR-Immune system" # scType annotation tissue: NULL if not known (inferred) or specify: Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus or IR-Immune system: better markers for 5' sequencing
+        restrict_REF_scType: NULL # "T cells|T-like" # NULL if all celltypes, or specify cells to restrict in reference (e.g. T cells, T-like, B cells, B-like)
+        ref_scType: "ref/scTypeDB.xlsx" # scType default reference, can be edited
+        ref_singleR: NULL # ["MonacoImmuneData()", "HumanPrimaryCellAtlasData()"] # NULL to ignore SingleR. else choose reference paper (e.g. "ChenBrainData()") from available datasets found in scRNAseq R package (section 2, https://bioconductor.org/packages/3.17/data/experiment/vignettes/scRNAseq/inst/doc/scRNAseq.html) or cellDex references (https://bioconductor.org/packages/3.17/data/experiment/vignettes/celldex/inst/doc/userguide.html#32_Database_of_Immune_Cell_ExpressioneQTLsEpigenomics_(DICE)). More than one allowed
+        label_singleR: NULL # ["label.main", "label.main"] # NULL if SingleR is not performed, else define variable where labels are stored in each reference dataset (depends on the paper, e.g. "SVM_clusterID" for ChenBrainData())
+    gs_preranked: #[OPTIONAL] step 6.5: gene set scoring will calculate the average expression levels of each specified regulatory program
+        enabled: True
+        ref_path: "/path/to/crocketa/ref/references_msigdb/human/h.all.v2022.1.Hs.symbols.gmt"
+        ## ref specifying different reference files, in one single string, sep by " ", in gmx/gmt format: "/path/to/reference.gmx path/to/reference2.gmx"
+        # some msigDB references are already loaded in ref folder: ref/references_msigdb/[human|mouse]/c2.cp.reactome.v2022.1.[Hs|Mm].symbols.gmt
+        rnk_path: TRUE # if TRUE, default rnk files from step4 are used, otherwise new path to .rnk files should be specified
+    seurat_gs: #[OPTIONAL] step 6: gene set scoring will calculate the average expression levels of each specified regulatory program
+        enabled: True
+        geneset_collection: "/path/to/crocketa/ref/references_msigdb/human/h.all.v2022.1.Hs.symbols.gmt" # geneset collections in GMT format to test
+        geneset_percentage: 0.2 # minimum ratio (expressed genes / total genes) for a geneset to be tested
+    slingshot: #[OPTIONAL] step 7: trajectory inference step
+        enabled: True
+        selected_res: 0.8 # resolution (number of clusters) taken from Seurat object to perform the trajectory analysis.
+        start_clus: False # cluster or clusters from where the curve or lineage start (optional)
+        end_clus: False # cluster or clusters where the curve or lineage end (optional)
+        n_var_genes: 1000 # top n variable genes selected to fit the model
+        n_plotted_genes: 50 # n top variable genes to plot in the heatmap
+    vision: #[OPTIONAL] step 8: cell and cluster functional analysis based on molecular signatures
+        enabled: True
+        geneset_collection: "/path/to/crocketa/ref/references_msigdb/human/h.all.v2022.1.Hs.symbols.gmt" # geneset collections in GMT format to test
+        meta_columns: ["nFeature_RNA", "percent.mt"] # metadata information to keep from the Seurat object
+        selected_res: 0.8 # resolution at which to select clusters to be added as metadata
+    velocyto: #[OPTIONAL] step 9: RNA velocity plots over single experiments samples.
+        enabled: True
+        selected_res: 0.8 # resolution (number of clusters) to represent in the velocity plot
+        downsampling:
+            enabled: False # cell downsampling (useful for samples with large number of cells)
+            n_cells: null # number of cells used to perform the downsampling
+    fastq_screen:
+        enabled: False
+    fastq_screen_indexes:
+        outdir: "res"
+    star: # these parameters are auto selected based on the technology and version specified above. Modify only if you know what you're doing.
+        # if custom, just need to specify the UMI length (--soloUMIlen) and the propper barcode list
+        10x:
+            v1:
+                "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 10  --soloCBlen 14 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM"
+            v2:
+                "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 10 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM"
+            v3:
+                "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 12 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM"
+        drop-seq:
+            "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 8 --soloCBlen 12 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM" 
+        custom:
+            "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen N --soloCBlen N --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM" 
+    multiqc: "--config res/config/multiqc_config.yaml"
+
+resources:
+    default:
+        threads: 1
+        mem_mb: 8000
+        walltime: 1400
+    merge:
+        mem_mb: 32000
+    star_index:
+        threads: 4
+        mem_mb: 28000
+    star:
+        threads: 2
+        mem_mb: 52000
+        walltime: 2880
+    cellranger:
+        threads: 2
+        mem_mb: 52000
+        walltime: 2880
+    fastqc:
+        threads: 4
+    rseqc_junction_saturation:
+        mem_mb: 8000
+    rseqc_readdup:
+        mem_mb: 24000
+    seurat_qc:
+        mem_mb: 3000
+    seurat_postqc:
+        mem_mb: 4000
+    seurat_filter:
+        mem_mb: 4000
+    seurat_merge:
+        mem_mb: 32000
+    seurat_DoubletFinder:
+        mem_mb: 32000
+    seurat_normalization:
+        threads: 4
+        mem_mb: 32000
+    seurat_integration:
+        threads: 4
+        mem_mb: 32000
+    seurat_find_clusters:
+        threads: 4
+        mem_mb: 28000
+    seurat_scRepertoire:
+        threads: 4
+        mem_mb: 28000
+    seurat_degs:
+        threads: 4
+        mem_mb: 28000
+    seurat_annotation_AZIMUTH:
+        threads: 4
+        mem_mb: 28000
+    seurat_annotation:
+        threads: 4
+        mem_mb: 28000
+    gs_preranked:
+        threads: 4
+        mem_mb: 8000
+    seurat_gs:
+        mem_mb: 16000
+    slingshot:
+        mem_mb: 8000
+    vision:
+        threads: 4
+        mem_mb: 16000 
+    velocyto:
+        mem_mb: 32000
+    fastq_screen_indexes:
+        threads: 8
+        outdir: "res"
+    fastq_screen:
+        threads: 8
+        disabled: true

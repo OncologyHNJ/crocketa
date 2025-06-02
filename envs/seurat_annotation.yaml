@@ -1,0 +1,28 @@
+channels:
+    - conda-forge
+    - bioconda
+
+dependencies:
+    - r-base=4.3
+    - libgfortran
+    - r-seurat
+    - r-ggplot2
+    - r-reticulate
+    - r-ggraph
+    - r-spatstat
+    - r-matrix
+    - r-patchwork
+    - r-future
+    - r-HGNChelper
+    - r-dplyr
+    - r-tidyverse
+    - r-data.tree
+    - r-igraph
+    - r-rcolorbrewer
+    - r-openxlsx
+    - bioconductor-singler
+    - bioconductor-scrnaseq
+    - bioconductor-scuttle
+    - bioconductor-scater
+    - bioconductor-scran
+    - bioconductor-celldex

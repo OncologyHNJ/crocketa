@@ -1,0 +1,19 @@
+channels:
+    - conda-forge
+    - bioconda
+
+dependencies:
+    - libgfortran
+    - r-base=4.3
+    - r-seurat
+    - r-dplyr
+    - r-tidyverse
+    - r-reticulate
+    - r-ggplot2
+    - bioconductor-biocparallel
+    - r-openxlsx
+    - bioconductor-limma
+    - r-spatstat
+    - r-metap=1.1
+    - r-matrix
+    - r-presto

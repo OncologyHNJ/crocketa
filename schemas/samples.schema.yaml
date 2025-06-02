@@ -1,0 +1,26 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+description: sample.tsv is defined by the sample name, TCR/BCR files and aditional optional metadata
+type: object
+properties:
+  sample:
+    type: string
+    description: sample ID from samples.tsv
+  sample_TCR:
+    type: string
+#    nullable: true
+    description: Defines the sample name for TCR sample. NULL if not necessary.
+  sample_BCR:
+    type: ["string", null]
+    description: Defines the sample name for BCR sample. NULL if not necessary.
+  vdj_fqPATH_TCR: 
+    type: string
+    description: Defines the path to each TCR sample. NULL if not necessary.
+  vdj_fqPATH_BCR:
+    type: string
+    description: Defines the path to each BCR sample. NULL if not necessary.
+required:
+  - sample
+#  - sample_TCR
+#  - sample_BCR
+#  - vdj_fqPATH_TCR
+#  - vdj_fqPATH_BCR

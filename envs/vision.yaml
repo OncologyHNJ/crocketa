@@ -1,0 +1,19 @@
+channels:
+    - conda-forge
+    - bioconda
+
+dependencies:
+    - r-base=4.3
+    - r-seurat
+    - r-ggplot2
+    - libopenblas
+    - r-devtools
+    - r-rtsne
+    - r-viridis
+    # - r-vision # requires install from github? for latest releases
+    - r-spatstat
+    # 3 following packages required for vision installation from script
+    - libsodium
+    - r-plumber
+    # - conda-forge::curl
+    # - bioconda::r-phytools

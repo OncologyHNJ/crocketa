@@ -1,0 +1,3 @@
+sample	matrix	metadata
+sample_1	/path/to/sample_1/exp_matrix.tsv	/path/to/sample_1/metadata.tsv
+sample_2	/path/to/sample_2/exp_matrix.tsv	/path/to/sample_2/metadata.tsv

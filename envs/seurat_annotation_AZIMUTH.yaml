@@ -1,0 +1,28 @@
+channels:
+    - conda-forge
+    - bioconda
+
+dependencies:
+    - r-base=4.3.*
+    - libgfortran
+    - r-devtools
+    - r-ggplot2
+    - r-dplyr
+    - r-httpuv
+    - igraph
+    - r-tibble
+    - r-hdf5r
+    - bioconductor-tfbstools
+    - r-data.table
+    - r-spatstat.explore
+    - r-uwot
+    - plotly
+    - r-leiden
+    - r-fastdummies
+    - r-seurat=5.*
+    - r-seurat-data
+    - r-azimuth
+    - bioconductor-bsgenome.hsapiens.ucsc.hg38=1.4.5
+    - bioconductor-go.db=3.18.0
+
+
