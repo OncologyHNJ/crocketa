@@ -62,7 +62,9 @@ The use of Snakemake alongside [conda](https://docs.conda.io/en/latest/) package
 10. [CITATION](#CITATION)
 
 ## 1. Pipeline configuration	
-*CROCKETA* architecture is based on the previously published [Bollito workflow](https://github.com/cnio-bu/bollito) and follows a similar tool configuration and structure.  Three input files must be provided to describe data structure, defining desired parameters and path to input files among others:
+*CROCKETA* is based on the previously published [Bollito workflow](https://github.com/cnio-bu/bollito) and follows a similar tool configuration and structure.  
+
+Three input files must be provided to describe data structure, defining desired parameters and path to input files among others:
 * **config.yaml** contains all pipeline parameters.
 * **samples.tsv** contains information on the samples to be analysed, including paths to TCR/BCR sequencing files and (optionally) sample metadata.
 * **units.tsv**: contains information and paths regarding gene expression data files associated with each sample.
