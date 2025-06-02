@@ -47,7 +47,7 @@ for cond in "${cond_array[@]}"
             cond="${assay_type}_snn_res.${cond}"
             echo "modified clustering condition: $cond"
         fi
-	rnk_files=($rnk_path$cond/*.rnk) # ultimo cambio, antes era: "$rnk_path""$cond"/*.rnk
+	rnk_files=($rnk_path$cond/*.rnk)
 	echo "rnk files are stored at: $rnk_files"
 	for rnk_file in "${rnk_files[@]}"
 	do
