@@ -73,7 +73,7 @@ message("3. Clustree representation was obtained.")
 silhouette_scores <- vector(mode = "list", length = length(res))
 
 # If the seurat object contains more than 100k samples, a subset is done to
-if (dim(seurat@meta.data)[1] > 100000){
+if (dim(seurat@meta.data)[1] > 75000){
 	  message("Downsampling seurat object to perform silhouette analysis")
   seurat_sil <- seurat[, sample(colnames(seurat), size = 20000, replace=F)]
 } else {
