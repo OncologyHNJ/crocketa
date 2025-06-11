@@ -78,7 +78,7 @@ Description of these files is provided below at section 1.B.
 Workflow requires previous conda installation in order to handle package management for each of the analysis steps. Follow [bioconda installation instructions](https://conda.io/projects/conda/en/latest/user-guide/install/index.html#installing-conda). 
 Conda installation can be avoided if singularity is already installed by providing --use-singularity option when running the pipeline.
 
-If conda installed, It is highly advisable to create a specific environment to avoid conflicts (e.g. numpy, detailed below)
+If conda installed, It is highly advisable to create a specific environment to avoid conflicts (e.g. numpy version, detailed below)
 
 	conda create -n crocketa
  	conda activate crocketa
