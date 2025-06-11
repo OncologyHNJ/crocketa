@@ -10,7 +10,7 @@ class ansitxt:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
 
-print(f"\n{ansitxt.BOLD}{ansitxt.RED}Starting CROCKETA Analysis -- Soria-Alcaide Gonzalo\n{ansitxt.ENDC}")
+print(f"\n{ansitxt.BOLD}{ansitxt.RED}Starting CROCKETA Analysis... \n{ansitxt.ENDC}")
 
 print(f"""
     )     (       )
