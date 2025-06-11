@@ -78,14 +78,16 @@ Description of these files is provided below at section 1.B.
 Workflow requires previous conda installation in order to handle package management for each of the analysis steps. Follow [bioconda installation instructions](https://conda.io/projects/conda/en/latest/user-guide/install/index.html#installing-conda). 
 Conda installation can be avoided if singularity is already installed by providing --use-singularity option when running the pipeline.
 
-If conda installed, It is highly advisable to create a specific environment to avoid conflicts (e.g. numpy version, detailed below)
+If conda installed, It is highly advisable to create a dedicated environment to avoid conflicts (e.g. with the NumPy version as detailed below). 
 
-	conda create -n crocketa numpy==1.23.5 pandas
+	conda create -n crocketa -c conda-forge -c bioconda numpy==1.23.5 pandas mamba snakemake
  	conda activate crocketa
+
+Otherwise, be aware that manual installation of snakemake, mamba (prefered), pandas and numpy==1.23.5 (to properly generate snakemake reports) is required.
 
 Afterwards, a local copy of this repository must be created from **Github**:
 
-    git clone https://github.com/OncologyHNJ/crocketa.git
+    	git clone https://github.com/OncologyHNJ/crocketa.git
 
 Then, ***CellRanger-7.2.0*** must be downloaded externally & unzipped in scripts/ folder from [***CellRanger previous releases***](https://www.10xgenomics.com/support/software/cell-ranger/downloads/previous-versions/):
 
@@ -95,10 +97,6 @@ Then, ***CellRanger-7.2.0*** must be downloaded externally & unzipped in scripts
 To run *GSEApreranked* analysis, an external [Java 11](https://www.oracle.com/es/java/technologies/javase/jdk11-archive-downloads.html) installation is required. Ubuntu user might run:
 
 	sudo apt install openjdk-11-jre-headless
-
- To create reports propperly, Numpy installation v1.23.5 is required. If not installed through conda, ubuntu user might run (specify ***your*** current python version):
-
-	python3.10 -m pip install --user numpy==1.23.5
 
 </details>
 
@@ -194,8 +192,6 @@ Some of the main available parameters are described below:
 <summary><i>Pipeline installation...</i></summary>
 	
 The very first time the pipeline is installed, conda environments must be created created. If not insalled, It's highly advisable to previously install mamba to improve package downloading & handling of environments.
-
-    conda install -c conda-forge mamba
  
 Environments are created through the following command:
     
