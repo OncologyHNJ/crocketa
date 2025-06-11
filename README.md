@@ -80,7 +80,7 @@ Conda installation can be avoided if singularity is already installed by providi
 
 If conda installed, It is highly advisable to create a specific environment to avoid conflicts (e.g. numpy version, detailed below)
 
-	conda create -n crocketa
+	conda create -n crocketa numpy==1.23.5 pandas
  	conda activate crocketa
 
 Afterwards, a local copy of this repository must be created from **Github**:
