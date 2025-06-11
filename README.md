@@ -96,7 +96,7 @@ To run *GSEApreranked* analysis, an external [Java 11](https://www.oracle.com/es
 
 	sudo apt install openjdk-11-jre-headless
 
- To create reports propperly, Numpy installation v1.23.5 is required. Ubuntu user might run (specify ***your*** current python version):
+ To create reports propperly, Numpy installation v1.23.5 is required. If not installed through conda, ubuntu user might run (specify ***your*** current python version):
 
 	python3.10 -m pip install --user numpy==1.23.5
 
