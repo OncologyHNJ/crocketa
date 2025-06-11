@@ -191,7 +191,7 @@ Some of the main available parameters are described below:
 <details open>
 <summary><i>Pipeline installation...</i></summary>
 	
-The very first time the pipeline is installed, conda environments must be created created. If not insalled, It's highly advisable to previously install mamba to improve package downloading & handling of environments.
+The very first time the pipeline is installed, conda environments must be created. If not insalled yet, It's highly advisable to previously install mamba to improve package downloading & handling of environments.
  
 Environments are created through the following command:
     
