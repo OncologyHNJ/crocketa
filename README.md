@@ -83,7 +83,7 @@ If conda installed, It is highly advisable to create a dedicated environment to 
 	conda create -n crocketa -c conda-forge -c bioconda numpy==1.23.5 pandas mamba snakemake
  	conda activate crocketa
 
-Otherwise, be aware that manual installation of snakemake, mamba (prefered), pandas and numpy==1.23.5 (to properly generate snakemake reports) is required.
+Otherwise, be aware that manual installation of snakemake, pandas, mamba (optional) and numpy==1.23.5 (to properly generate snakemake reports) is required.
 
 Afterwards, a local copy of this repository must be created from **Github**:
 
