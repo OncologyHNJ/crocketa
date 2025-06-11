@@ -87,7 +87,7 @@ Otherwise, be aware that manual installation of snakemake, mamba (prefered), pan
 
 Afterwards, a local copy of this repository must be created from **Github**:
 
-    	git clone https://github.com/OncologyHNJ/crocketa.git
+	git clone https://github.com/OncologyHNJ/crocketa.git
 
 Then, ***CellRanger-7.2.0*** must be downloaded externally & unzipped in scripts/ folder from [***CellRanger previous releases***](https://www.10xgenomics.com/support/software/cell-ranger/downloads/previous-versions/):
 
