@@ -658,6 +658,10 @@ As described in bollito documentation, and maintained in this new workflow, AnnD
 ## Known Issues
 * Azimuth is not working due to updates in code, set to *FALSE* until update.
 * Viral annotation is exclussive to TCR clones due to restricted database access. BCR-clone viral annotation is yet to be implemented.
+### Troubleshooting
+* *Error: File not found:* Properly check spelling of sample columns and file paths.
+* *Error in STAR: * FATAL ERROR in input read file: the total length of barcode sequence is XX not equal to expected YY. *Solution: Check technology version and barcode whitelist specified. 10x v3 expects 28 nts length (16 Barcode + 12 UMI) as YY, v2 expects 26 (16 Barcode + 10 UMI), v1 expects 24 (14 Barcode + 10 UMI)*
+* *Error in CellRanger*: CellRanger will create a new directory to save results. If any previous execution for a specific sample has been aborted, there might already be a cellranger existing folder when re-running the execution, and an error will arise. *Solution: Remove the pre-existing CellRanger sample-associated directory of results - {out_dir}/cellranger/{sample}/{sample}_cellR/*
 
 ## Implementation Details
 The pipeline was developed and tested on Ubuntu 24.04 LTS but is designed to run seamlessly on any standard Linux distribution. For Windows users, it can be easily deployed within a Docker container,
