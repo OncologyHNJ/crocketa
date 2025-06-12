@@ -1,12 +1,18 @@
 #!/bin/bash
 
+## command line: bash cellranger_writeCSV.sh -gex "/Users/gsoria/Desktop/bolledit_v2/ref/gex" -vdj "/Users/gsoria/Desktop/bolledit_v2/ref/VDJ" -units "/Users/gsoria/Desktop/bolledit_v2/cellranger_draft/edited_units_forCellRnger.tsv" -o "/Users/gsoria/Desktop/bolledit_v2/cellranger_draft/" -i "s3_GeneX_C"
+
 # read arguments from command line
 ref_GEX="$1"
 samples_path="$2"
 units_path="$3"
 out_dir="$4"
 sample_i="$5"
+cores="$6"
+mem_mb="$7"
 
+echo "cores: $cores"
+echo "mem: $mem_mb"
 # Verify all variables are loaded
 if [[ -z $out_dir || -z $ref_GEX || -z $samples_path || -z $units_path || -z $sample_i ]]; then
     echo "Must provide all required arguments"
@@ -37,4 +43,4 @@ if [[ -z $gex_fqPATH || -z $lanes ]]; then
 fi
 
 echo "All parameters OK, starting cellranger GEX..."
-./scripts/cellranger-7.2.0/cellranger count --id=out_cellranger_${sample_i} --transcriptome=${ref_GEX} --fastqs=${gex_fqPATH} --sample=${sample_i} --output-dir=${out_dir}${sample_i}_cellR
+./scripts/cellranger-7.2.0/cellranger count --id=out_cellranger_${sample_i} --transcriptome=${ref_GEX} --fastqs=${gex_fqPATH} --sample=${sample_i} --output-dir=${out_dir}${sample_i}_cellR --localcores=${cores} --localmem=${mem_mb}
