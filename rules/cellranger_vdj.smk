@@ -57,7 +57,7 @@ rule cellranger:
     echo $file_count
     if [[ $file_count -gt 0 ]]; then
         echo "run cellranger multi VDJ + GEX"
-    	./scripts/cellranger-7.2.0/cellranger multi --id out_cellranger_{params.sample_i} --csv {params.cellranger_csv} --output-dir {params.output_dir}{params.sample_i}_cellR --disable-ui --localcores {threads} --localmem {resources.mem_mb} &> {log}
+    	./scripts/cellranger-7.2.0/cellranger multi --id out_cellranger_{params.sample_i} --csv {params.cellranger_csv} --output-dir {params.output_dir}{params.sample_i}_cellR --disable-ui --localcores {threads} --localmem {resources.mem_mb // 1024} &> {log}
     else
         echo "run cellranger GEX"
         bash ./scripts/cellranger_GEX.sh {params.ref_GEX} {params.samples_path} {params.units_path} {params.output_dir} {params.sample_i} {threads} {resources.mem_mb} &> {log}
