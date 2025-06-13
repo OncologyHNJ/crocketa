@@ -9,11 +9,11 @@ units_path="$3"
 out_dir="$4"
 sample_i="$5"
 cores="$6"
-mem_mb="$7"
+mem_gb="$7"
 
 echo "cores: $cores"
-mem_gb=$((mem_mb / 1024))
 echo "mem: $mem_gb"
+
 # Verify all variables are loaded
 if [[ -z $out_dir || -z $ref_GEX || -z $samples_path || -z $units_path || -z $sample_i ]]; then
     echo "Must provide all required arguments"
