@@ -177,7 +177,7 @@ resources:
         walltime: 2880
     cellranger:
         threads: 2
-        mem_mb: 52 # in GB
+        mem_mb: 52000
         walltime: 2880
     fastqc:
         threads: 4
