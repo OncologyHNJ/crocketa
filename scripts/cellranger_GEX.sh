@@ -12,7 +12,8 @@ cores="$6"
 mem_mb="$7"
 
 echo "cores: $cores"
-echo "mem: $mem_mb"
+mem_gb=$((mem_mb / 1024))
+echo "mem: $mem_gb"
 # Verify all variables are loaded
 if [[ -z $out_dir || -z $ref_GEX || -z $samples_path || -z $units_path || -z $sample_i ]]; then
     echo "Must provide all required arguments"
@@ -43,4 +44,4 @@ if [[ -z $gex_fqPATH || -z $lanes ]]; then
 fi
 
 echo "All parameters OK, starting cellranger GEX..."
-./scripts/cellranger-7.2.0/cellranger count --id=out_cellranger_${sample_i} --transcriptome=${ref_GEX} --fastqs=${gex_fqPATH} --sample=${sample_i} --output-dir=${out_dir}${sample_i}_cellR --localcores=${cores} --localmem=${mem_mb}
+./scripts/cellranger-7.2.0/cellranger count --id=out_cellranger_${sample_i} --transcriptome=${ref_GEX} --fastqs=${gex_fqPATH} --sample=${sample_i} --output-dir=${out_dir}${sample_i}_cellR --localcores=${cores} --localmem=${mem_gb}
