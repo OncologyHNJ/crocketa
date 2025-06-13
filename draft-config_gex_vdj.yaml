@@ -162,7 +162,6 @@ parameters:
     multiqc: "--config res/config/multiqc_config.yaml"
 
 resources:
-resources:
     default:
         threads: 1
         mem_mb: 8000
