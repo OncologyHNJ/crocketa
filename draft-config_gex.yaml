@@ -170,21 +170,21 @@ resources:
         mem_mb: 32000
     star_index:
         threads: 4
-        mem_mb: 28000
+        mem_mb: 32000
     star:
         threads: 2
-        mem_mb: 52000
+        mem_mb: 128000
         walltime: 2880
     cellranger:
         threads: 2
-        mem_mb: 52000
+        mem_mb: 128000
         walltime: 2880
     fastqc:
         threads: 4
     rseqc_junction_saturation:
         mem_mb: 8000
     rseqc_readdup:
-        mem_mb: 24000
+        mem_mb: 32000
     seurat_qc:
         mem_mb: 3000
     seurat_postqc:
@@ -196,26 +196,26 @@ resources:
     seurat_DoubletFinder:
         mem_mb: 32000
     seurat_normalization:
-        threads: 4
-        mem_mb: 32000
+        threads: 2
+        mem_mb: 128000
     seurat_integration:
         threads: 4
         mem_mb: 32000
     seurat_find_clusters:
         threads: 4
-        mem_mb: 28000
+        mem_mb: 64000
     seurat_scRepertoire:
         threads: 4
-        mem_mb: 28000
+        mem_mb: 32000
     seurat_degs:
         threads: 4
-        mem_mb: 28000
+        mem_mb: 64000
     seurat_annotation_AZIMUTH:
         threads: 4
         mem_mb: 28000
     seurat_annotation:
         threads: 4
-        mem_mb: 28000
+        mem_mb: 64000
     gs_preranked:
         threads: 4
         mem_mb: 8000
