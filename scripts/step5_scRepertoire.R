@@ -865,7 +865,7 @@ for (x.cond in cond){
 			mutate(Combination = as.character(Combination)) %>%
 			arrange(Num_Conditions, desc(Num_Cells)) %>%
 			mutate(Combination = factor(Combination, levels = unique(Combination)))
-		bar_width <- max(0.2,min(0.9, 5/length(results$Combination))
+		bar_width <- max(0.2,min(0.9, 5/length(results$Combination)))
 		
 		p5.5 <- ggplot(results, aes(x = Combination, y = Num_Cells, fill = Num_Cells)) +
 			geom_col(width = bar_width, color = "black", fill = "#006699") +
