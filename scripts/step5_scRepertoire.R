@@ -839,6 +839,7 @@ for (x.cond in cond){
     
     message("Extract number of cells per clonal overlap - Barplot")
     # extract number of cells per clonal overlap according to x.cond
+    if (length(unique(all_data[[x.cond]])) <=10){
 	  clon_cond <- all_data %>%
 			distinct(CTaa, !!sym(x.cond)) %>%
 			group_by(CTaa) %>%
@@ -884,16 +885,14 @@ for (x.cond in cond){
 			  vjust = -0.5, 
 			  size = 4)
 	  ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-Intersect_NCells_per", x.cond, ".pdf"), plot = p5.5, scale = 1.5, width = 8)
-	  
+    }
     # Draw scatterplots zoomed/scaled
     samples_list <- sort(names(combined2))
     for (tag in c("plot", "plot_zoomed")){
 	    pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter_compare-1vs1_scaled", tag, ".pdf"))
 	    for (i in seq_along(combined2)){
-	        print(i)
 	        for (j in c(seq_along(combined2)[c(i:length(combined2))])){
 	        if (all(i != j, i != samples_list[length(samples_list)])){
-	            print(j)
 	            xline <- combined2[[i]] %>% 
 	                    count(CTaa) %>% mutate(frequency = n / sum(n)) %>% 
 	                    arrange(desc(frequency)) %>% slice_head(n=100) %>% 
@@ -905,9 +904,6 @@ for (x.cond in cond){
 	            lim <- max(unlist(lapply(combined2, function(x){
 	                z <- x %>% count(CTaa) %>% mutate(frequency = n / sum(n)) %>% pull(frequency) %>% max()
 	                return(z)})))
-	            
-	            print(xline)
-	            print(yline)
 	            if (tag == "plot"){
 	                print(scatterClonotype(combined2, 
 	                    cloneCall ="aa", 
