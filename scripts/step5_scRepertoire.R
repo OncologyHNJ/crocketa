@@ -781,12 +781,10 @@ for (x.cond in cond){
           values_fill = list(match = 0)
         )  ## fill empty cells with 0
       level_present <- levels(seurat_i@meta.data[[x.cond]])[levels(seurat_i@meta.data[[x.cond]]) %in% colnames(data_wide)]
-      print(level_present)
       ylabel <- "Number of Common Clones"
       xlabel <- "Total Number of Unique Clones"
       # Convert presence-matching columns in factor
       data_wide <- data_wide %>% select(-Total) %>% as.data.frame()
-      print(colnames(data_wide))
       data_wide <- data_wide[, c("CTaa", level_present)]
       # Create graphic: UpSetR
       print(dim(common_clones)[1])
