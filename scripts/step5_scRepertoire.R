@@ -867,15 +867,15 @@ for (x.cond in cond){
 			arrange(Num_Conditions, desc(Num_Cells)) %>%
 			mutate(Combination = factor(Combination, levels = unique(Combination)))
 		bar_width <- max(0.2,min(0.9, 5/length(results$Combination)))
-		
+		x_size <- max(5, min(12, 20 / log1p(length(unique(results$combinations)))))
 		p5.5 <- ggplot(results, aes(x = Combination, y = Num_Cells, fill = Num_Cells)) +
 			geom_col(width = bar_width, color = "black", fill = "#006699") +
-			labs(title = paste0("Number of cells per Intersection, according to ", x.cond, " intersection"),
-			     y = "Intersection level",
-			     x = "Number of cells") +
+			labs(title = paste0("Number of cells per Intersection, according to ", x.cond),
+			     y = "Number of cells",
+			     x = "Intersection level") +
 			theme_minimal(base_size = 10) + 
 			theme(
-			  axis.text.y = element_text(angle = 45, hjust = 1, vjust = 1),
+			  axis.text.x = element_text(angle = 45, hjust = 1, size = x_size),
 			  legend.position = "none",
 			  panel.grid.major.y = element_blank(),
 			  panel.grid.minor = element_blank(),
@@ -884,6 +884,7 @@ for (x.cond in cond){
 			geom_text(aes(label = Num_Cells), 
 			  vjust = -0.5, 
 			  size = 4)
+	  write_xlsx(results, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-NCells_intersect.xlsx"))
 	  ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-Intersect_NCells_per", x.cond, ".pdf"), plot = p5.5, scale = 1.5, width = 8)
     }
     # Draw scatterplots zoomed/scaled
