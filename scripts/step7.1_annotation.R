@@ -108,13 +108,13 @@ if (case == "lowercase"){
 interest_feat <- interest_feat[interest_feat %in% rownames(seurat)]
 if (length(interest_feat) > 1){
 	pdf(paste0(dir.name, "/", folders[6], "/1.1_Expression_check_interest.pdf"))
-	DotPlot(seurat, features = interest_feat,        
+	print(DotPlot(seurat, features = interest_feat,        
 		    cols = "RdBu") + RotatedAxis() +  
-	  ggplot2::theme(axis.text.x=element_text(angle=90,hjust=1))
+	  ggplot2::theme(axis.text.x=element_text(angle=90,hjust=1)))
 	stacked <- ifelse(length(interest_feat) ==1, FALSE, TRUE) # if only one gene, non-stacked vlnplot
-	VlnPlot(seurat, interest_feat, stack = stacked, flip = T)
+	print(VlnPlot(seurat, interest_feat, stack = stacked, flip = T) + NoLegend())
 	for (i in seq(1, length(interest_feat), 1)){
-		print(FeaturePlot(seurat, interest_feat[i], 
+		print(FeaturePlot(seurat, interest_feat[i], raster=FALSE,
 		                  reduction = "umap", label = FALSE, repel = TRUE, order = TRUE) &   
 		        scale_colour_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")))
 		        }
