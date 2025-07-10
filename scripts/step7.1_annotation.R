@@ -105,7 +105,7 @@ if (case == "lowercase"){
   interest_feat <- str_to_lower(interest_feat)
 }
 
-interest_feat <- interest_feat[interest_feat %in% rownames(seurat)]
+interest_feat <- unique(interest_feat[interest_feat %in% rownames(seurat)])
 if (length(interest_feat) > 1){
 	pdf(paste0(dir.name, "/", folders[6], "/1.1_Expression_check_interest.pdf"))
 	print(DotPlot(seurat, features = interest_feat,        
