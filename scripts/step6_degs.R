@@ -154,7 +154,7 @@ lapply(selected_cond, function(cond){
       
       # setting slim.col.label to TRUE will print just the cluster IDS instead of every cell name
       table(seurat@meta.data[[cond]])
-      p1 <- DoHeatmap(object = seurat, features = unique(groupedby.clusters.markers$gene), group.by = cond, size = xtext_value, angle = 45, 
+      p1 <- DoHeatmap(object = seurat, features = unique(groupedby.clusters.markers$gene), slot = "data", group.by = cond, size = xtext_value, angle = 45, 
                       group.bar = TRUE, draw.lines = F, raster = FALSE) +
         scale_fill_gradientn(colors = c("blue", "white", "red")) + guides(color=FALSE) + 
         theme(axis.text.y = element_text(size = ytext_value)) + 
