@@ -125,6 +125,7 @@ contig_list <- lapply(csv_files, function(file) {
     return(NULL)  # Devuelve NULL en caso de error
   })
 })
+print(csv_files)
 names(contig_list) <- csv_files
 contig_list <- Filter(Negate(is.null), contig_list)
 message(colnames(seurat)[1])
@@ -145,6 +146,9 @@ message(head(contig_list[[1]][["barcode"]][1])) # format of barcoding: -1 suffix
 # message(print(head(contig_list)))
 message("contig_list created")
 
+# split Ts/Bs
+T_contig <- contig_list[grepl("vdj_t", names(contig_list))]
+B_contig <- contig_list[grepl("vdj_b", names(contig_list))]
 # Merge with seurat object:
 ## 0.1- generate combined data
 # combine(T/B)CR functions require a samples argument
@@ -157,7 +161,7 @@ message("contig_list created")
 # is a Bcell or a Tcell in order to keep only the actual barcode and re-run analysis including duplicated cells.
 
 # define samples variables according to contig list (to propperly match barcodes)
-samples_vdj <-unlist(lapply(names(contig_list), function(file) {
+samples_vdj_T <-unlist(lapply(names(T_contig), function(file) {
     # print(file)
     val <- NULL
     for (ident in levels(seurat@meta.data[["orig.ident"]])){
@@ -172,7 +176,23 @@ samples_vdj <-unlist(lapply(names(contig_list), function(file) {
     print(val)  # Imprime el valor encontrado
     return(val)
 }))
-print(samples_vdj)
+print(samples_vdj_T)
+samples_vdj_B <-unlist(lapply(names(B_contig), function(file) {
+    # print(file)
+    val <- NULL
+    for (ident in levels(seurat@meta.data[["orig.ident"]])){
+        if (grepl(ident, file)) {
+            val <- ident
+            break  # Salir del bucle si se encuentra el valor
+        }
+    }
+    if (is.null(val)) {
+        message(sprintf("Correspondent value not found in file '%s'", file))
+    }
+    print(val)  # Imprime el valor encontrado
+    return(val)
+}))
+print(samples_vdj_B)
 if (is.null(cells) | all(!(cells %in% c("T-AB", "T-GD", "B-cells")))){
   stop("Define a propper cell label")
   # cell box is empty (null) or not one of the 3 possible sets of cells
@@ -180,15 +200,15 @@ if (is.null(cells) | all(!(cells %in% c("T-AB", "T-GD", "B-cells")))){
     full.combined <- NULL
     for (label in cells){ # might be more than one cell type at a time
       if (label %in% c("T-AB", "T-GD")){
-      combined <- combineTCR(contig_list, 
-        samples = samples_vdj, 
+      combined <- combineTCR(T_contig, 
+        samples = samples_vdj_T, 
         ID = NULL,
         cells = label) # for T-cells
       message("combineTCR done")
       } else {
         if (label == "B-cells"){
-          combined <- combineBCR(contig_list, 
-            samples = samples_vdj,
+          combined <- combineBCR(B_contig, 
+            samples = samples_vdj_B,
             ID = NULL) # for B-cells
           message("combineBCR done")
         }
@@ -781,10 +801,12 @@ for (x.cond in cond){
           values_fill = list(match = 0)
         )  ## fill empty cells with 0
       level_present <- levels(seurat_i@meta.data[[x.cond]])[levels(seurat_i@meta.data[[x.cond]]) %in% colnames(data_wide)]
+      print(level_present)
       ylabel <- "Number of Common Clones"
       xlabel <- "Total Number of Unique Clones"
       # Convert presence-matching columns in factor
       data_wide <- data_wide %>% select(-Total) %>% as.data.frame()
+      print(colnames(data_wide))
       data_wide <- data_wide[, c("CTaa", level_present)]
       # Create graphic: UpSetR
       print(dim(common_clones)[1])
@@ -868,7 +890,7 @@ for (x.cond in cond){
 		x_size <- max(5, min(12, 20 / log1p(length(unique(results$combinations)))))
 		p5.5 <- ggplot(results, aes(x = Combination, y = Num_Cells, fill = Num_Cells)) +
 			geom_col(width = bar_width, color = "black", fill = "#006699") +
-			labs(title = paste0("Number of cells per Intersection, according to ", x.cond),
+			labs(title = paste0("Number of cells per Intersection, according to ", x.cond, " intersection"),
 			     y = "Number of cells",
 			     x = "Intersection level") +
 			theme_minimal(base_size = 10) + 
@@ -882,16 +904,18 @@ for (x.cond in cond){
 			geom_text(aes(label = Num_Cells), 
 			  vjust = -0.5, 
 			  size = 4)
-	  write_xlsx(results, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-NCells_intersect.xlsx"))
 	  ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-Intersect_NCells_per", x.cond, ".pdf"), plot = p5.5, scale = 1.5, width = 8)
-    }
+	  write_xlsx(results, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-NCells_intersect.xlsx"))
+	  }
     # Draw scatterplots zoomed/scaled
     samples_list <- sort(names(combined2))
     for (tag in c("plot", "plot_zoomed")){
 	    pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter_compare-1vs1_scaled", tag, ".pdf"))
 	    for (i in seq_along(combined2)){
+	        print(i)
 	        for (j in c(seq_along(combined2)[c(i:length(combined2))])){
 	        if (all(i != j, i != samples_list[length(samples_list)])){
+	            print(j)
 	            xline <- combined2[[i]] %>% 
 	                    count(CTaa) %>% mutate(frequency = n / sum(n)) %>% 
 	                    arrange(desc(frequency)) %>% slice_head(n=100) %>% 
@@ -903,6 +927,9 @@ for (x.cond in cond){
 	            lim <- max(unlist(lapply(combined2, function(x){
 	                z <- x %>% count(CTaa) %>% mutate(frequency = n / sum(n)) %>% pull(frequency) %>% max()
 	                return(z)})))
+	            
+	            print(xline)
+	            print(yline)
 	            if (tag == "plot"){
 	                print(scatterClonotype(combined2, 
 	                    cloneCall ="aa", 
