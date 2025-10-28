@@ -121,14 +121,13 @@ contig_list <- lapply(csv_files, function(file) {
   tryCatch({
     read.csv(file, header = TRUE)
   }, error = function(e) {
-    message(sprintf("Error en el archivo '%s': %s", file, e$message))
+    message(sprintf("Error in file '%s': %s", file, e$message))
     return(NULL)  # Devuelve NULL en caso de error
   })
 })
 print(csv_files)
 names(contig_list) <- csv_files
 contig_list <- Filter(Negate(is.null), contig_list)
-message(colnames(seurat)[1])
 message(length(contig_list)) # all files loaded to contig list?
 message(contig_list[[1]][["barcode"]][1]) # format of barcoding
 
@@ -167,7 +166,7 @@ samples_vdj_T <-unlist(lapply(names(T_contig), function(file) {
     for (ident in levels(seurat@meta.data[["orig.ident"]])){
         if (grepl(ident, file)) {
             val <- ident
-            break  # Salir del bucle si se encuentra el valor
+            break  # Exit the loop when value is found
         }
     }
     if (is.null(val)) {
@@ -183,7 +182,7 @@ samples_vdj_B <-unlist(lapply(names(B_contig), function(file) {
     for (ident in levels(seurat@meta.data[["orig.ident"]])){
         if (grepl(ident, file)) {
             val <- ident
-            break  # Salir del bucle si se encuentra el valor
+            break  # Exit the loop when value is found
         }
     }
     if (is.null(val)) {
@@ -194,7 +193,7 @@ samples_vdj_B <-unlist(lapply(names(B_contig), function(file) {
 }))
 print(samples_vdj_B)
 if (is.null(cells) | all(!(cells %in% c("T-AB", "T-GD", "B-cells")))){
-  stop("Define a propper cell label")
+  stop("Define a proper cell label")
   # cell box is empty (null) or not one of the 3 possible sets of cells
   } else {
     full.combined <- NULL
@@ -439,7 +438,7 @@ dev.off()
 common_clones <- seurat@meta.data %>%
   group_by(CTaa) %>% # grouping AA clones
   summarise("count"=n_distinct(get(cond_i))) %>% # count condition in each group
-  filter(count == length(unique(seurat@meta.data[[cond_i]]))) %>% select(CTaa) %>% # filter those groups that don't have alll conditions presents
+  filter(count == length(unique(seurat@meta.data[[cond_i]]))) %>% select(CTaa) %>% # filter those groups that don't have all conditions presents
   filter(!is.na(CTaa))
 
 combined <- expression2List(seurat, 
@@ -536,7 +535,7 @@ for (x.cond in cond){
     final_df <- NULL
     seurat_i@meta.data[[x.cond]] <- as.factor(seurat_i@meta.data[[x.cond]])
     for (per_C in levels(seurat_i@meta.data[[x.cond]])){
-      dir.create(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/", per_C))
+      dir.create(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/level_", per_C))
       # create the per_condition subsetting of seurat_i
       seurat_i_sub <- seurat_i[, which(x = FetchData(object = seurat_i, vars = x.cond) == per_C)]
       ## step0 - ADDITIONAL: save .csv files with all sequences split by alpha & beta, to perform viral ddbb enrichment analysis manually (if want to check immunarch results)
@@ -551,12 +550,11 @@ for (x.cond in cond){
           chain <- c(chain, chain_i)
         }
         chain <- data.frame("clones" = unique(chain[chain != "NA" & !is.na(chain)]))
-        write.csv(chain, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/", per_C, "/7.0-Clones_", per_C, "_", id, "chain.csv"), row.names = F)
+        write.csv(chain, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/level_", per_C, "/7.0-Clones_", per_C, "_", id, "chain.csv"), row.names = F)
       }
-      
       ## 4 - highlightClonotypes: highlight the most-frequent clonotypes per condition
       TOPsequence <- seurat_i_sub@meta.data[order(seurat_i_sub@meta.data$Frequency, decreasing = TRUE),]
-      write_xlsx(TOPsequence[,c("barcode", "Frequency", "CTaa", "CTnt", "CTgene", "cloneType")], paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/", per_C, "/2_cloneTypes_byFrequency_", x.cond, "_",per_C, ".xlsx"))
+      write_xlsx(TOPsequence[,c("barcode", "Frequency", "CTaa", "CTnt", "CTgene", "cloneType")], paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/level_", per_C, "/2_cloneTypes_byFrequency_", x.cond, "_",per_C, ".xlsx"))
       for (i in seq(1,length(n))){ # in case more than 1 top_n specified in n
         TOP_n <- head(unique(TOPsequence[["CTaa"]]), n[i])
         # n value as input parameter if >2 desired clonotypes to plot
@@ -568,13 +566,13 @@ for (x.cond in cond){
         theme(plot.title = element_blank()) +
         scale_color_manual(values = rev(color_clones(n[i])), na.value="lightgrey") +
         theme(legend.text=element_text(size=rel(0.35)))
-        ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/", per_C, "/2_highlightClonotypes_", x.cond, "_",per_C, "_TOP",n[i],".pdf"), plot = p2, scale = 1.5)
+        ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/level_", per_C, "/2_highlightClonotypes_", x.cond, "_",per_C, "_TOP",n[i],".pdf"), plot = p2, scale = 1.5)
       }
       ## AND BARPLOT TOP100 CLONES
       TOP_100 <- head(unique(TOPsequence[["CTaa"]]), 100)
       df_100 <- seurat_i_sub@meta.data %>% filter(CTaa %in% TOP_100) %>% arrange(desc(Frequency))
       count_data<- table(df_100$CTaa)
-      if (dim(count_data)[1] > 0){
+      if (length(count_data) > 0){
 		  count_df100 <- data.frame(CTaa = names(count_data), count = as.vector(count_data)) %>% arrange(desc(count))
 		  count_df100$clone <- paste("clone", 1:dim(count_df100)[1], sep = "")
 		  count_df100$clone <- factor(count_df100$clone, levels = count_df100$clone)
@@ -605,22 +603,24 @@ for (x.cond in cond){
 		    xlab("Clonetype AA") +
 		    ylab("Number of cells") +
 		    theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 4))  
-		  pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/", per_C, "/6_TOP100_clonetypes_barplot_", x.cond, "_",per_C, ".pdf"), width = 10)
+		  pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/level_", per_C, "/6_TOP100_clonetypes_barplot_", x.cond, "_",per_C, ".pdf"), width = 10)
 		  print(p6.1)
 		  print(p6.2)
 		  dev.off()
-		  write_xlsx(count_df100, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/", per_C, "/6_TOP100_clonetypes_barplot_", x.cond, "_",per_C, ".xlsx"))
+		  write_xlsx(count_df100, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/level_", per_C, "/6_TOP100_clonetypes_barplot_", x.cond, "_",per_C, ".xlsx"))
 		}
       ## 5- Clonetype repertoire deep analysis
       # create a dataframe to store unique values per clonetype range (plotted outside loop)
       t_i <- as.data.frame(table(seurat_i_sub@meta.data[, c("cloneType", x.cond)]))
+      if (dim(t_i)[1] > 0){
       df_i <- seurat_i_sub@meta.data %>%
         group_by(cloneType) %>% mutate("unique_CTaa_perCloneType" = n_distinct(c(CTaa))) %>% # length(unique(CTaa)) per cloneType level
         select(x.cond, cloneType, unique_CTaa_perCloneType) %>% # already extracted the individual unique sets
         distinct() %>% inner_join(t_i, by = c("cloneType", x.cond)) %>% as.data.frame() # add the absolute number of cells (to resemble the barplot)
       final_df <- rbind(final_df, df_i)
+    	}
     }
-    
+    print(head(final_df))
     col <- length(clonetypes)
     p3.1 <- occupiedscRepertoire(seurat_i, x.axis = x.cond) +
         scale_fill_manual(values = c(color_CTs(col))) 
@@ -691,13 +691,13 @@ for (x.cond in cond){
                   exportTable = T)
     write_xlsx(as.data.frame(t5.1), paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.1_ClonalOverlap_morisita_", x.cond, ".xlsx"))
 
-    # additional Venn Diagram (expected to be similar to clonal overlap raw) - máx 4
+    # additional Venn Diagram (expected to be similar to clonal overlap raw) - max 4
     venn_list <- vector("list", n_distinct(seurat_i@meta.data[[x.cond]]))
     names(venn_list) <- sort(unique(seurat_i@meta.data[[x.cond]]))
     for (i in 1:n_distinct(seurat_i@meta.data[[x.cond]])){ 
       venn_list[[i]] <- seurat_i[, which(x = FetchData(object = seurat_i, vars = x.cond) == names(venn_list)[i])]@meta.data %>% filter(!is.na(CTaa)) %>% pull(CTaa)
     }
-    if (length(unique(seurat_i@meta.data[[x.cond]])) <= 4){ # - máx 4 lists to draw
+    if (length(unique(seurat_i@meta.data[[x.cond]])) <= 4){ # - max 4 lists to draw
       p5.2A <- ggvenn(venn_list,
             fill_color = color_conds(n_distinct(seurat_i@meta.data[[x.cond]])),
             stroke_size = 0.5, set_name_size = 4) + 
@@ -735,7 +735,7 @@ for (x.cond in cond){
     for (i in 1:length(names(files))){ 
       venn_list_t100[[i]] <- seurat_i[, which(x = FetchData(object = seurat_i, vars = x.cond) == names(venn_list_t100)[i])]@meta.data %>% filter(CTaa %in% files[[i]][["CTaa"]]) %>% pull(CTaa)
     }
-    if (length(unique(seurat_i@meta.data[[x.cond]])) <= 4){ # - máx 4 lists to draw
+    if (length(unique(seurat_i@meta.data[[x.cond]])) <= 4){ # - max 4 lists to draw
       p5.2C <- ggvenn(venn_list_t100,
             fill_color = color_conds(n_distinct(seurat_i@meta.data[[x.cond]])),
             stroke_size = 0.5, set_name_size = 4) + 
@@ -754,7 +754,7 @@ for (x.cond in cond){
     common_clones <- seurat_i@meta.data %>%
       group_by(CTaa) %>% # grouping AA clones
       summarise("count"=n_distinct(get(x.cond))) %>% # count condition in each group
-      filter(count == length(unique(seurat_i@meta.data[[x.cond]]))) %>% select(CTaa) %>% # filter those groups that don't have alll conditions presents
+      filter(count == length(unique(seurat_i@meta.data[[x.cond]]))) %>% select(CTaa) %>% # filter those groups that don't have all conditions presents
       filter(!is.na(CTaa))
     seurat_i <- highlightClonotypes(seurat_i, 
                                   cloneCall= "aa", 
@@ -865,8 +865,10 @@ for (x.cond in cond){
 			group_by(CTaa) %>%
 			summarise(Conditions = list(sort(unique(!!sym(x.cond))))) %>%
 			ungroup()
-
+			
+		cond_with_clones <- unique(unlist(clon_cond$Conditions))
 		all_cond <- sort(unique(all_data[[x.cond]]))
+		all_cond <- sort(intersect(all_cond, cond_with_clones))
 
 		combinations <- unlist(lapply(1:length(all_cond), 
 				                     function(x) combn(all_cond, x, simplify = FALSE)), recursive = FALSE)
@@ -877,17 +879,27 @@ for (x.cond in cond){
 
 		results <- map_df(combinations, function(comb) {
 			presence <- clon_cond$CTaa[clon_in_comb(comb, clon_cond)]
+			if (length(presence) == 0) {
+				return(tibble(
+				  Combination = paste(comb, collapse = "&"),
+				  Num_Cells = 0,
+				  Num_Conditions = length(comb)
+				))
+			}
 			n_cells <- all_data %>% filter(CTaa %in% presence) %>% nrow()
-			tibble(Combination = paste(comb, collapse = "&"), 
-			 Num_Cells = n_cells,
-			 Num_Conditions = length(comb))
+			tibble(
+				Combination = paste(comb, collapse = "&"),
+				Num_Cells = n_cells,
+				Num_Conditions = length(comb)
+			)
 		})  %>% arrange(desc(Num_Cells))
 		results <- results %>%
 			mutate(Combination = as.character(Combination)) %>%
 			arrange(Num_Conditions, desc(Num_Cells)) %>%
 			mutate(Combination = factor(Combination, levels = unique(Combination)))
+		head(results)
 		bar_width <- max(0.2,min(0.9, 5/length(results$Combination)))
-		x_size <- max(5, min(12, 20 / log1p(length(unique(results$combinations)))))
+		x_size <- max(5, min(12, 20 / log1p(length(unique(results$Combination)))))
 		p5.5 <- ggplot(results, aes(x = Combination, y = Num_Cells, fill = Num_Cells)) +
 			geom_col(width = bar_width, color = "black", fill = "#006699") +
 			labs(title = paste0("Number of cells per Intersection, according to ", x.cond, " intersection"),
@@ -907,15 +919,26 @@ for (x.cond in cond){
 	  ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-Intersect_NCells_per", x.cond, ".pdf"), plot = p5.5, scale = 1.5, width = 8)
 	  write_xlsx(results, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-NCells_intersect.xlsx"))
 	  }
+	  message("Draw scatterplots")
     # Draw scatterplots zoomed/scaled
     samples_list <- sort(names(combined2))
+    dir.create(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter/"))
     for (tag in c("plot", "plot_zoomed")){
-	    pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter_compare-1vs1_scaled", tag, ".pdf"))
+	    pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter/scatter_compare-scaled_", tag, ".pdf"))
 	    for (i in seq_along(combined2)){
 	        print(i)
 	        for (j in c(seq_along(combined2)[c(i:length(combined2))])){
 	        if (all(i != j, i != samples_list[length(samples_list)])){
 	            print(j)
+				    	# Verify empty datasets
+						  if (nrow(combined2[[i]]) == 0 | nrow(combined2[[j]]) == 0) {
+						    message("Skipping empty dataset: ", samples_list[i], " or ", samples_list[j])
+						    next
+						  }
+						  if (!("CTaa" %in% colnames(combined2[[i]])) | !("CTaa" %in% colnames(combined2[[j]]))) {
+						    message("Missing CTaa column in ", samples_list[i], " or ", samples_list[j])
+						    next
+						  }
 	            xline <- combined2[[i]] %>% 
 	                    count(CTaa) %>% mutate(frequency = n / sum(n)) %>% 
 	                    arrange(desc(frequency)) %>% slice_head(n=100) %>% 
@@ -930,38 +953,49 @@ for (x.cond in cond){
 	            
 	            print(xline)
 	            print(yline)
-	            if (tag == "plot"){
-	                print(scatterClonotype(combined2, 
-	                    cloneCall ="aa", 
-	                    x.axis = samples_list[i],
-	                    y.axis = samples_list[j],
-	                    dot.size = "total",
-	                    graph = "proportion") + scale_color_manual(values = c("#8B6914", "#336B66","#7EC0EE","#CDCD00", "#90EE90")) +
-	                        geom_vline(xintercept = xline,col="red", linetype = "dashed") + 
-	                        geom_hline(yintercept= yline, col="red", linetype = "dashed") +
-	                        coord_cartesian(xlim = c(0,lim), ylim=c(0,lim)) + scale_size_continuous(limits=c(1,4000)) # adjust coords
-	                )
-	            } else {
-	                print(scatterClonotype(combined2, 
-	                    cloneCall ="aa", 
-	                    x.axis = samples_list[i],
-	                    y.axis = samples_list[j],
-	                    dot.size = "total",
-	                    graph = "proportion") + scale_color_manual(values = c("#8B6914", "#336B66","#7EC0EE","#CDCD00", "#90EE90")) +
-	                        geom_vline(xintercept = xline,col="red", linetype = "dashed") + 
-	                        geom_hline(yintercept= yline, col="red", linetype = "dashed")
-	                )
-	            }
-	            scatter_table <- scatterClonotype(combined2, 
-	                        cloneCall ="aa", 
-	                        x.axis = samples_list[i],
-	                        y.axis = samples_list[j],
-	                        dot.size = "total",
-	                        graph = "proportion", exportTable=T)
-	            write.table(scatter_table, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter_compare-", samples_list[i], ".vs.", samples_list[j],".tsv"), row.names = F, quote=F, sep = "\t")
-		        }
-			} 
-		}
+						  tryCatch({
+						    if (tag == "plot") {
+						      p <- scatterClonotype(
+						        combined2,
+						        cloneCall = "aa",
+						        x.axis = samples_list[i],
+						        y.axis = samples_list[j],
+						        dot.size = "total",
+						        graph = "proportion"
+						      ) +
+						        scale_color_manual(values = c("#8B6914", "#336B66", "#7EC0EE", "#CDCD00", "#90EE90")) +
+						        geom_vline(xintercept = xline, col = "red", linetype = "dashed") +
+						        geom_hline(yintercept = yline, col = "red", linetype = "dashed") +
+						        coord_cartesian(xlim = c(0, lim), ylim = c(0, lim)) +
+						        scale_size_continuous(limits = c(1, 4000))
+						    } else {
+						      p <- scatterClonotype(
+						        combined2,
+						        cloneCall = "aa",
+						        x.axis = samples_list[i],
+						        y.axis = samples_list[j],
+						        dot.size = "total",
+						        graph = "proportion"
+						      ) +
+						        scale_color_manual(values = c("#8B6914", "#336B66", "#7EC0EE", "#CDCD00", "#90EE90")) +
+						        geom_vline(xintercept = xline, col = "red", linetype = "dashed") +
+						        geom_hline(yintercept = yline, col = "red", linetype = "dashed")
+						    }
+
+						    print(p)
+			          scatter_table <- scatterClonotype(combined2, 
+			                      cloneCall ="aa", 
+			                      x.axis = samples_list[i],
+			                      y.axis = samples_list[j],
+			                      dot.size = "total",
+			                      graph = "proportion", exportTable=T)
+			          write.table(scatter_table, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter/scatter_compare-", samples_list[i], ".vs.", samples_list[j],".tsv"), row.names = F, quote=F, sep = "\t")
+		        }, error = function(e) {
+		        	message("Error generating scatter for ",
+                  samples_list[i], " vs ", samples_list[j], ": ", e$message)})
+					} 
+				}
+			}
 		dev.off()    
 		}
     message("Scatterplots drawn")
@@ -985,9 +1019,9 @@ for (x.cond in cond){
 											for (i in seq(1,length(n))){ # in case more than 1 top_n specified in n
 												TOPsums <- NULL
 												for (per_C in levels(seurat_i@meta.data[[x.cond]])){
-													print(sum(grepl("6",  list.files(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/", per_C)))))
-													if (sum(grepl("6",  list.files(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/", per_C)))) > 1){
-															full_ctaa <- read_excel(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/", per_C, "/6_TOP100_clonetypes_barplot_", x.cond, "_", per_C, ".xlsx"))
+													print(sum(grepl("6",  list.files(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/level_", per_C)))))
+													if (sum(grepl("6",  list.files(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/level_", per_C)))) > 1){
+															full_ctaa <- read_excel(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/level_", per_C, "/6_TOP100_clonetypes_barplot_", x.cond, "_", per_C, ".xlsx"))
 															top_ctaa <- full_ctaa %>%
 															head(n[i]) %>% pull(CTaa)
 															# top_ctaa$freq <- top_ctaa$Count/sum(full_ctaa)
@@ -1032,8 +1066,8 @@ for (x.cond in cond){
 message("ANALYSIS FINISHED")
 '
 # 7.8. Save Seurat objects in AnnData
-SaveH5Seurat(seurat, filename = paste0(dir.name, "/", folders[3], "//seurat_scRepertoire.h5Seurat"))
-Convert(paste0(dir.name, "/",folders[3], "//seurat_scRepertoire.h5Seurat"), dest = "h5ad")
+SaveH5Seurat(seurat, filename = paste0(dir.name, "/", folders[3], "/seurat_scRepertoire.h5Seurat"))
+Convert(paste0(dir.name, "/",folders[3], "/seurat_scRepertoire.h5Seurat"), dest = "h5ad")
 ' # no compatibility for seurat v4.3 & seuratdisk
 
 saveRDS(seurat_noViral, file = paste0(dir.name, "/",folders[4], "/seurat_scRepertoire-noViral.rds"))
