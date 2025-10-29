@@ -1,0 +1,2 @@
+sample	sample_TCR	sample_BCR	vdj_fqPATH_TCR	vdj_fqPATH_BCR	condition	patient
+sc5p_v2_hs_B_1k_5gex	NULL	sc5p_v2_hs_B_1k_b	NULL	/path/to/sc5p_v2_hs_B_1k_multi_5gex_b_fastqs_subset/sc5p_v2_hs_B_1k_b/	A	1
