@@ -302,171 +302,177 @@ colnames(totaldf) <- c("condition", "CTaa", "count")
 write_xlsx(totaldf, paste0(dir.name, "/", folders[4], "/1_Clonetype_by_", cond_i, ".xlsx"))
 
 ## VIRAL ANNOTATION
-'
+
 # TBAdb paired ann?
 # tbadb = dbLoad("https://gitlab.com/immunomind/immunarch/raw/dev-0.5.0/private/TBAdb.xlsx", "tbadb", .species = "Homo Sapiens", .chain = c("TRA-TRB"))
 ## Cannot access
 # if TBAdb error solved, it might be possible to perform analysis
-df_chains_paired <- df_chains %>% rowwise() %>%
-  mutate("CTaa_paired" = paste0(CTaa_alpha, "_", CTaa_beta))
-df_chains_paired <- df_chains_paired %>% 
-  distinct(row, CTaa_paired, condition)
-df_chains_paired <- split(as.data.frame(df_chains_paired), df_chains_paired$condition)
 
-for (i in seq_along(df_chains_paired)){
-  # df_chains[[i]] <- transform(df_chains[[i]], Clones = ave(seq(nrow(df_chains[[i]])), CTaa, FUN=length))
-  df_chains_paired[[i]]$Clones <- 1
-}
-'
-df_chains <- seurat@meta.data %>% mutate("row" = rownames(seurat@meta.data)) %>% rowwise()  %>%
-        mutate("CTaa_alpha" = ifelse(is.na(CTaa), CTaa, strsplit(CTaa, "_")[[1]][1]),
-          "CTaa_beta" = ifelse(is.na(CTaa), CTaa,strsplit(CTaa, "_")[[1]][-1])) %>%
-        as.data.frame() # separate paired to single chain clones
-df_chains <- separate_rows(df_chains, CTaa_alpha, CTaa_beta, sep = ";") # duplicate for those with 2 clones
-df_chains_single <- split(as.data.frame(df_chains), df_chains[[cond_i]]) # list by condition
-for (i in seq_along(df_chains_single)){
-  df_chains_single[[i]]$Clones <- 1 # to sum clones, as not performed for unique but for single cells separately, set to 1 and it is count downstream
-}
-# VDJDB - Single
-vdjdb_ann_alpha <- dbAnnotate(df_chains_single, vdjdb_ALPHA, "CTaa_alpha", "cdr3")
-vdjdb_ann_alpha <- vdjdb_ann_alpha %>%
-    mutate(total = rowSums(select(., -CTaa_alpha, -Samples)))
-vdjdb_ann_beta <- dbAnnotate(df_chains_single, vdjdb_BETA, "CTaa_beta", "cdr3")
-vdjdb_ann_beta <- vdjdb_ann_beta %>%
-    mutate(total = rowSums(select(., -CTaa_beta, -Samples)))
+#df_chains_paired <- df_chains %>% rowwise() %>%
+#  mutate("CTaa_paired" = paste0(CTaa_alpha, "_", CTaa_beta))
+#df_chains_paired <- df_chains_paired %>% 
+#  distinct(row, CTaa_paired, condition)
+#df_chains_paired <- split(as.data.frame(df_chains_paired), df_chains_paired$condition)
 
-# summarizing plot per condition & chain
-summarized_vdjdb <- rbind(
-  vdjdb_ann_alpha  %>%
-  summarize_at(vars(-CTaa_alpha, -Samples, -total),
-              funs(sum = sum)),
-  vdjdb_ann_beta  %>%
-  summarize_at(vars(-CTaa_beta, -Samples, -total),
-              funs(sum = sum))
-) %>% as.data.frame()
+#for (i in seq_along(df_chains_paired)){
+#  df_chains_paired[[i]]$Clones <- 1
+#}
 
-colnames(summarized_vdjdb) <- gsub("_sum", "", colnames(summarized_vdjdb))
-summarized_vdjdb$chain <- c("alpha", "beta")
-summarized_vdjdb <- melt(setDT(summarized_vdjdb))
-p7.1A <- ggplot(summarized_vdjdb, aes(x = chain, y = variable)) + 
-  geom_tile(aes(fill = value), height = 0.5) +
-  scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")) +
-  labs(title = "Viral annotated clones per chain", x = "TCR Chain", y = cond_i, fill = "count") +
-  theme(panel.background = element_rect(fill = "white")) +
-  geom_text(aes(label = value), color = "black", size = 3)  # Agregar etiquetas de texto con los valores
-ggsave(paste0(dir.name, "/", folders[4], "/7.1A_ViralAnn_VDJDB_SummPerChain.pdf"), plot = p7.1A, scale = 1.5, width = 8)
+if(! is.null(samples_vdj_T) ){
+	message("viral annotation for TCRs")
+	df_chains <- seurat@meta.data %>% mutate("row" = rownames(seurat@meta.data)) %>% rowwise()  %>%
+		      mutate("CTaa_alpha" = ifelse(is.na(CTaa), CTaa, strsplit(CTaa, "_")[[1]][1]),
+		        "CTaa_beta" = ifelse(is.na(CTaa), CTaa,strsplit(CTaa, "_")[[1]][-1])) %>%
+		      as.data.frame() # separate paired to single chain clones
+	df_chains <- separate_rows(df_chains, CTaa_alpha, CTaa_beta, sep = ";") # duplicate for those with 2 clones
+	df_chains_single <- split(as.data.frame(df_chains), df_chains[[cond_i]]) # list by condition
+	for (i in seq_along(df_chains_single)){
+		df_chains_single[[i]]$Clones <- 1 # to sum clones, as not performed for unique but for single cells separately, set to 1 and it is count downstream
+	}
+	# VDJDB - Single
+	vdjdb_ann_alpha <- dbAnnotate(df_chains_single, vdjdb_ALPHA, "CTaa_alpha", "cdr3")
+	vdjdb_ann_alpha <- vdjdb_ann_alpha %>%
+		  mutate(total = rowSums(select(., -CTaa_alpha, -Samples)))
+	vdjdb_ann_beta <- dbAnnotate(df_chains_single, vdjdb_BETA, "CTaa_beta", "cdr3")
+	vdjdb_ann_beta <- vdjdb_ann_beta %>%
+		  mutate(total = rowSums(select(., -CTaa_beta, -Samples)))
 
-# plot also relative numbers
-## totaldf <- as.data.frame(table(seurat@meta.data[[cond_i]], !is.na(seurat$CTaa))) %>% filter(Var2 == TRUE)
-## colnames(totaldf) <- c("condition", "CTaa", "count")
-summarized_vdjdb <- summarized_vdjdb %>% rowwise() %>% 
-  mutate("rel_value" = value/totaldf[totaldf[["condition"]] == variable, "count"])
-p7.1B <- ggplot(summarized_vdjdb, aes(x = chain, y = variable)) + 
-  geom_tile(aes(fill = rel_value), height = 0.5) +
-  scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")) +
-  labs(title = "Viral annotated clones per chain (relative to total clones per condition)", x = "TCR Chain", y = cond_i, fill = "count") +
-  theme(panel.background = element_rect(fill = "white")) +
-  geom_text(aes(label = round(rel_value, 3)), color = "black", size = 3)  # Agregar etiquetas de texto con los valores
-ggsave(paste0(dir.name, "/", folders[4], "/7.1B_ViralAnn_VDJDB_SummPerChain_relative.pdf"), plot = p7.1B, scale = 1.5, width = 8)
+	# summarizing plot per condition & chain
+	summarized_vdjdb <- rbind(
+		vdjdb_ann_alpha  %>%
+		summarize_at(vars(-CTaa_alpha, -Samples, -total),
+		            funs(sum = sum)),
+		vdjdb_ann_beta  %>%
+		summarize_at(vars(-CTaa_beta, -Samples, -total),
+		            funs(sum = sum))
+	) %>% as.data.frame()
 
-# plot top 10 clones per chain
-for (chain in c("alpha", "beta")){
-  if (chain == "alpha"){
-    vdjdb_ann <- vdjdb_ann_alpha} else{
-      vdjdb_ann <- vdjdb_ann_beta}
-  colnames(vdjdb_ann) <- gsub("_alpha|_beta", "", colnames(vdjdb_ann))
-  vdjdb_ann <- vdjdb_ann %>%
-    arrange(-total) %>% slice_head(n = 10) %>%
-    pivot_longer(cols = -c(CTaa, Samples, total), names_to = cond_i, values_to = "value")
-  vdjdb_ann$CTaa <- as.factor(vdjdb_ann$CTaa)
-  p7.2 <- ggplot(vdjdb_ann, aes(x = reorder(CTaa, -value), y = value, fill = get(cond_i))) +
-    geom_bar(stat = "identity", position = "stack") +
-    labs(title = paste0("Top-10 Abundant viral clones - ", chain, " chain"), x = "CTaa", y = "Number of cells", fill = cond_i) +
-    scale_fill_manual(values = color_conds(n_distinct(vdjdb_ann[[cond_i]]))) +
-    #scale_fill_manual(values =color_vector(9)[c(5:8)]) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  ggsave(paste0(dir.name, "/", folders[4], "/7.2_TOP10_ViralClones_VDJDB-",chain,".pdf"), plot = p7.2, scale = 1.5, width = 8)
+	colnames(summarized_vdjdb) <- gsub("_sum", "", colnames(summarized_vdjdb))
+	summarized_vdjdb$chain <- c("alpha", "beta")
+	summarized_vdjdb <- melt(setDT(summarized_vdjdb))
+	p7.1A <- ggplot(summarized_vdjdb, aes(x = chain, y = variable)) + 
+		geom_tile(aes(fill = value), height = 0.5) +
+		scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")) +
+		labs(title = "Viral annotated clones per chain", x = "TCR Chain", y = cond_i, fill = "count") +
+		theme(panel.background = element_rect(fill = "white")) +
+		geom_text(aes(label = value), color = "black", size = 3)  # Agregar etiquetas de texto con los valores
+	ggsave(paste0(dir.name, "/", folders[4], "/7.1A_ViralAnn_VDJDB_SummPerChain.pdf"), plot = p7.1A, scale = 1.5, width = 8)
 
-}
+	# plot also relative numbers
+	## totaldf <- as.data.frame(table(seurat@meta.data[[cond_i]], !is.na(seurat$CTaa))) %>% filter(Var2 == TRUE)
+	## colnames(totaldf) <- c("condition", "CTaa", "count")
+	summarized_vdjdb <- summarized_vdjdb %>% rowwise() %>% 
+		mutate("rel_value" = value/totaldf[totaldf[["condition"]] == variable, "count"])
+	p7.1B <- ggplot(summarized_vdjdb, aes(x = chain, y = variable)) + 
+		geom_tile(aes(fill = rel_value), height = 0.5) +
+		scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")) +
+		labs(title = "Viral annotated clones per chain (relative to total clones per condition)", x = "TCR Chain", y = cond_i, fill = "count") +
+		theme(panel.background = element_rect(fill = "white")) +
+		geom_text(aes(label = round(rel_value, 3)), color = "black", size = 3)  # Agregar etiquetas de texto con los valores
+	ggsave(paste0(dir.name, "/", folders[4], "/7.1B_ViralAnn_VDJDB_SummPerChain_relative.pdf"), plot = p7.1B, scale = 1.5, width = 8)
 
-# plot UMAP highlighting viral clones:
-viralClones <- df_chains %>% rowwise() %>%
-  mutate("alpha_viral" = ifelse(CTaa_alpha %in% vdjdb_ann_alpha$CTaa_alpha, CTaa, "FALSE"),
-          "beta_viral" = ifelse(CTaa_beta %in% vdjdb_ann_beta$CTaa_beta, CTaa, "FALSE")) %>%
-  mutate("paired_viral" = ifelse(alpha_viral != "FALSE" & beta_viral != "FALSE", CTaa, "FALSE")) %>% 
-  select(CTaa, alpha_viral, beta_viral, paired_viral)
+	# plot top 10 clones per chain
+	for (chain in c("alpha", "beta")){
+		if (chain == "alpha"){
+		  vdjdb_ann <- vdjdb_ann_alpha} else{
+		    vdjdb_ann <- vdjdb_ann_beta}
+		colnames(vdjdb_ann) <- gsub("_alpha|_beta", "", colnames(vdjdb_ann))
+		vdjdb_ann <- vdjdb_ann %>%
+		  arrange(-total) %>% slice_head(n = 10) %>%
+		  pivot_longer(cols = -c(CTaa, Samples, total), names_to = cond_i, values_to = "value")
+		vdjdb_ann$CTaa <- as.factor(vdjdb_ann$CTaa)
+		p7.2 <- ggplot(vdjdb_ann, aes(x = reorder(CTaa, -value), y = value, fill = get(cond_i))) +
+		  geom_bar(stat = "identity", position = "stack") +
+		  labs(title = paste0("Top-10 Abundant viral clones - ", chain, " chain"), x = "CTaa", y = "Number of cells", fill = cond_i) +
+		  scale_fill_manual(values = color_conds(n_distinct(vdjdb_ann[[cond_i]]))) +
+		  #scale_fill_manual(values =color_vector(9)[c(5:8)]) +
+		  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+		ggsave(paste0(dir.name, "/", folders[4], "/7.2_TOP10_ViralClones_VDJDB-",chain,".pdf"), plot = p7.2, scale = 1.5, width = 8)
 
-seurat <- highlightClonotypes(seurat, 
-                                cloneCall= "aa", 
-                                sequence = unique(viralClones$alpha_viral))
-seurat$viral_alpha <- seurat@meta.data %>% rowwise() %>%
-    mutate("is.viral" = ifelse(is.na(highlight), highlight, "alpha_viral")) %>% pull(is.viral)
+	}
 
-seurat <- highlightClonotypes(seurat, 
-                                cloneCall= "aa", 
-                                sequence = unique(viralClones$beta_viral))
+	# plot UMAP highlighting viral clones:
+	viralClones <- df_chains %>% rowwise() %>%
+		mutate("alpha_viral" = ifelse(CTaa_alpha %in% vdjdb_ann_alpha$CTaa_alpha, CTaa, "FALSE"),
+		        "beta_viral" = ifelse(CTaa_beta %in% vdjdb_ann_beta$CTaa_beta, CTaa, "FALSE")) %>%
+		mutate("paired_viral" = ifelse(alpha_viral != "FALSE" & beta_viral != "FALSE", CTaa, "FALSE")) %>% 
+		select(CTaa, alpha_viral, beta_viral, paired_viral)
 
-seurat$viral_beta <- seurat@meta.data %>% rowwise() %>%
-    mutate("is.viral" = ifelse(is.na(highlight), highlight, "beta_viral")) %>% pull(is.viral)
-seurat <- highlightClonotypes(seurat, 
-                                cloneCall= "aa", 
-                                sequence = unique(viralClones$paired_viral))
-seurat$viral_paired <- seurat@meta.data %>% rowwise() %>%
-    mutate("is.viral" = ifelse(is.na(highlight), highlight, "paired_viral")) %>% pull(is.viral)
+	seurat <- highlightClonotypes(seurat, 
+		                              cloneCall= "aa", 
+		                              sequence = unique(viralClones$alpha_viral))
+	seurat$viral_alpha <- seurat@meta.data %>% rowwise() %>%
+		  mutate("is.viral" = ifelse(is.na(highlight), highlight, "alpha_viral")) %>% pull(is.viral)
 
-pdf(paste0(dir.name, "/", folders[4], "/7.3_UMAP_viralAnn_VDJDB.pdf"), width = 7)
-p7.3.1 <- DimPlot(seurat, group.by = "viral_alpha") + 
-    theme(plot.title = element_blank()) +
-    scale_color_manual(values = "#ED217C", na.value="grey") +
-    theme(legend.text=element_text(size=rel(0.5))) +
-    ggtitle("Viral annotated clones - alpha chain - VDJDB")
-p7.3.2 <- DimPlot(seurat, group.by = "viral_beta") + 
-    theme(plot.title = element_blank()) +
-    scale_color_manual(values = "#1B998B", na.value="grey") +
-    theme(legend.text=element_text(size=rel(0.5))) +
-    ggtitle("Viral annotated clones - beta chain - VDJDB")
-p7.3.3 <- DimPlot(seurat, group.by = "viral_paired") + 
-    theme(plot.title = element_blank()) +
-    scale_color_manual(values = "#0C6B9F", na.value="grey") +
-    theme(legend.text=element_text(size=rel(0.5))) +
-    ggtitle("Viral annotated clones - paired - VDJDB")
-print(p7.3.1)
-print(p7.3.2)
-print(p7.3.3)
-dev.off()
+	seurat <- highlightClonotypes(seurat, 
+		                              cloneCall= "aa", 
+		                              sequence = unique(viralClones$beta_viral))
 
-common_clones <- seurat@meta.data %>%
-  group_by(CTaa) %>% # grouping AA clones
-  summarise("count"=n_distinct(get(cond_i))) %>% # count condition in each group
-  filter(count == length(unique(seurat@meta.data[[cond_i]]))) %>% select(CTaa) %>% # filter those groups that don't have all conditions presents
-  filter(!is.na(CTaa))
+	seurat$viral_beta <- seurat@meta.data %>% rowwise() %>%
+		  mutate("is.viral" = ifelse(is.na(highlight), highlight, "beta_viral")) %>% pull(is.viral)
+	seurat <- highlightClonotypes(seurat, 
+		                              cloneCall= "aa", 
+		                              sequence = unique(viralClones$paired_viral))
+	seurat$viral_paired <- seurat@meta.data %>% rowwise() %>%
+		  mutate("is.viral" = ifelse(is.na(highlight), highlight, "paired_viral")) %>% pull(is.viral)
 
-combined <- expression2List(seurat, 
-                            split.by = cond_i)
-p7.4.1 <- compareClonotypes(combined, cloneCall="aa", clonotypes = unique(viralClones$alpha_viral), graph = "alluvial") +
-  scale_fill_manual(values = rep("#ED217C",length(viralClones$alpha_viral))) + NoLegend()
-ggsave(paste0(dir.name, "/", folders[4], "/7.4A_Alluvial_alphaViralClonotypes_",cond_i, ".pdf"), plot = p7.4.1, scale = 1.5, width = 8)
-p7.4.2 <- compareClonotypes(combined, cloneCall="aa", clonotypes = viralClones$beta_viral, graph = "alluvial") +
-  scale_fill_manual(values = rep("#1B998B",length(viralClones$beta_viral))) + NoLegend()
-ggsave(paste0(dir.name, "/", folders[4], "/7.4B_Alluvial_betaViralClonotypes_", cond_i, ".pdf"), plot = p7.4.2, scale = 1.5, width = 8)
-p7.4.3 <- compareClonotypes(combined, cloneCall="aa", clonotypes = viralClones$paired_viral, graph = "alluvial") +
-  scale_fill_manual(values = rep("#0C6B9F",length(viralClones$paired_viral))) + NoLegend()
-ggsave(paste0(dir.name, "/", folders[4], "/7.4C_Alluvial_pairedViralClonotypes_", cond_i, ".pdf"), plot = p7.4.3, scale = 1.5, width = 8)
+	pdf(paste0(dir.name, "/", folders[4], "/7.3_UMAP_viralAnn_VDJDB.pdf"), width = 7)
+	p7.3.1 <- DimPlot(seurat, group.by = "viral_alpha") + 
+		  theme(plot.title = element_blank()) +
+		  scale_color_manual(values = "#ED217C", na.value="grey") +
+		  theme(legend.text=element_text(size=rel(0.5))) +
+		  ggtitle("Viral annotated clones - alpha chain - VDJDB")
+	p7.3.2 <- DimPlot(seurat, group.by = "viral_beta") + 
+		  theme(plot.title = element_blank()) +
+		  scale_color_manual(values = "#1B998B", na.value="grey") +
+		  theme(legend.text=element_text(size=rel(0.5))) +
+		  ggtitle("Viral annotated clones - beta chain - VDJDB")
+	p7.3.3 <- DimPlot(seurat, group.by = "viral_paired") + 
+		  theme(plot.title = element_blank()) +
+		  scale_color_manual(values = "#0C6B9F", na.value="grey") +
+		  theme(legend.text=element_text(size=rel(0.5))) +
+		  ggtitle("Viral annotated clones - paired - VDJDB")
+	print(p7.3.1)
+	print(p7.3.2)
+	print(p7.3.3)
+	dev.off()
 
-# MCPAS DDBB: Paired
-mcpas_ann <- dbAnnotate(df_chains_single, mcpas, c("CTaa_alpha", "CTaa_beta"), c("CDR3.alpha.aa", "CDR3.beta.aa"))
-ann_res <- list(vdjdb_ann_alpha, vdjdb_ann_beta, mcpas_ann)
-names(ann_res) <- c("vdjdb_ann_alpha", "vdjdb_ann_beta", "mcpas_ann")
-write_xlsx(ann_res, paste0(dir.name, "/", folders[4], "/7.5_ViralAnn.xlsx"))
+	common_clones <- seurat@meta.data %>%
+		group_by(CTaa) %>% # grouping AA clones
+		summarise("count"=n_distinct(get(cond_i))) %>% # count condition in each group
+		filter(count == length(unique(seurat@meta.data[[cond_i]]))) %>% select(CTaa) %>% # filter those groups that don't have all conditions presents
+		filter(!is.na(CTaa))
 
-## and perform now clonotype analysis with & without Viral annotated clones
-seurat$viral_alpha[is.na(seurat$viral_alpha)] <- "noViral"
-seurat$viral_beta[is.na(seurat$viral_beta)] <- "noViral"
-seurat$viral_paired[is.na(seurat$viral_paired)] <- "noViral"
-nonviral_Data <- FetchData(object = seurat, vars =c("viral_alpha", "viral_beta", "viral_paired"))
-seurat_noViral <- seurat[,rowSums(nonviral_Data == "noViral") == ncol(nonviral_Data)]
+	combined <- expression2List(seurat, 
+		                          split.by = cond_i)
+	p7.4.1 <- compareClonotypes(combined, cloneCall="aa", clonotypes = unique(viralClones$alpha_viral), graph = "alluvial") +
+		scale_fill_manual(values = rep("#ED217C",length(viralClones$alpha_viral))) + NoLegend()
+	ggsave(paste0(dir.name, "/", folders[4], "/7.4A_Alluvial_alphaViralClonotypes_",cond_i, ".pdf"), plot = p7.4.1, scale = 1.5, width = 8)
+	p7.4.2 <- compareClonotypes(combined, cloneCall="aa", clonotypes = viralClones$beta_viral, graph = "alluvial") +
+		scale_fill_manual(values = rep("#1B998B",length(viralClones$beta_viral))) + NoLegend()
+	ggsave(paste0(dir.name, "/", folders[4], "/7.4B_Alluvial_betaViralClonotypes_", cond_i, ".pdf"), plot = p7.4.2, scale = 1.5, width = 8)
+	p7.4.3 <- compareClonotypes(combined, cloneCall="aa", clonotypes = viralClones$paired_viral, graph = "alluvial") +
+		scale_fill_manual(values = rep("#0C6B9F",length(viralClones$paired_viral))) + NoLegend()
+	ggsave(paste0(dir.name, "/", folders[4], "/7.4C_Alluvial_pairedViralClonotypes_", cond_i, ".pdf"), plot = p7.4.3, scale = 1.5, width = 8)
 
-message("Viral annotation completed!")
+	# MCPAS DDBB: Paired
+	mcpas_ann <- dbAnnotate(df_chains_single, mcpas, c("CTaa_alpha", "CTaa_beta"), c("CDR3.alpha.aa", "CDR3.beta.aa"))
+	ann_res <- list(vdjdb_ann_alpha, vdjdb_ann_beta, mcpas_ann)
+	names(ann_res) <- c("vdjdb_ann_alpha", "vdjdb_ann_beta", "mcpas_ann")
+	write_xlsx(ann_res, paste0(dir.name, "/", folders[4], "/7.5_ViralAnn.xlsx"))
+
+	## and perform now clonotype analysis with & without Viral annotated clones
+	seurat$viral_alpha[is.na(seurat$viral_alpha)] <- "noViral"
+	seurat$viral_beta[is.na(seurat$viral_beta)] <- "noViral"
+	seurat$viral_paired[is.na(seurat$viral_paired)] <- "noViral"
+	nonviral_Data <- FetchData(object = seurat, vars =c("viral_alpha", "viral_beta", "viral_paired"))
+	seurat_noViral <- seurat[,rowSums(nonviral_Data == "noViral") == ncol(nonviral_Data)]
+
+	message("Viral annotation completed!")
+} else { 
+	seurat_noViral <- NULL
+	message("Skipping viral annotation, not available for BCRs yet") 
+	}
 
 for (x.cond in cond){
   if(grepl("^0|1.[0-9]$", x.cond)){
@@ -475,7 +481,9 @@ for (x.cond in cond){
   if(!(x.cond %in% colnames(seurat@meta.data))){
     stop("The specified condition is not available.")
   }
-  for (set in c("Full_assay", "Non_Viral_assay")){
+  sets <- ifelse(is.null(seurat_noViral), "Full_assay", c("Full_assay", "Non_Viral_assay"))
+  print(sets)
+  for (set in sets){
     message(paste0("1- Performing repertoire Analysis for ", set, " - According to ", x.cond))
     dir.create(paste0(dir.name, "/", folders[4], "/", set))
     dir.create(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond))
@@ -665,340 +673,342 @@ for (x.cond in cond){
                     exportTable = T)
     write_xlsx(as.data.frame(t4), paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/4_ClonalProportion_", x.cond, ".xlsx"))
     # 10.4 Clonal Overlap
-    pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.1_ClonalOverlap_", x.cond, ".pdf"), width = 8.5)
-    print(clonalOverlap(combined2, 
-              cloneCall="aa", 
-              method="raw") +
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))) 
-    print(clonalOverlap(combined2, 
-                  cloneCall="aa", 
-                  method="morisita")+
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))) 
-    print(clonalOverlap(combined2, 
-                  cloneCall="aa", 
-                  method="jaccard")+
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))) 
-    print(clonalOverlap(combined2, 
-                  cloneCall="aa", 
-                  method="overlap")+
-        theme(axis.text.x = element_text(angle = 90, hjust = 1))) 
-    dev.off()
-    
-    # and export table
-    t5.1 <- clonalOverlap(combined2, 
-                  cloneCall="aa", 
-                  method="morisita",
-                  exportTable = T)
-    write_xlsx(as.data.frame(t5.1), paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.1_ClonalOverlap_morisita_", x.cond, ".xlsx"))
+    if (length(unique(seurat_i@meta.data[[x.cond]])) > 1){
+		  pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.1_ClonalOverlap_", x.cond, ".pdf"), width = 8.5)
+		  print(clonalOverlap(combined2, 
+		            cloneCall="aa", 
+		            method="raw") +
+		      theme(axis.text.x = element_text(angle = 90, hjust = 1))) 
+		  print(clonalOverlap(combined2, 
+		                cloneCall="aa", 
+		                method="morisita")+
+		      theme(axis.text.x = element_text(angle = 90, hjust = 1))) 
+		  print(clonalOverlap(combined2, 
+		                cloneCall="aa", 
+		                method="jaccard")+
+		      theme(axis.text.x = element_text(angle = 90, hjust = 1))) 
+		  print(clonalOverlap(combined2, 
+		                cloneCall="aa", 
+		                method="overlap")+
+		      theme(axis.text.x = element_text(angle = 90, hjust = 1))) 
+		  dev.off()
+		  
+		  # and export table
+		  t5.1 <- clonalOverlap(combined2, 
+		                cloneCall="aa", 
+		                method="morisita",
+		                exportTable = T)
+		  write_xlsx(as.data.frame(t5.1), paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.1_ClonalOverlap_morisita_", x.cond, ".xlsx"))
 
-    # additional Venn Diagram (expected to be similar to clonal overlap raw) - max 4
-    venn_list <- vector("list", n_distinct(seurat_i@meta.data[[x.cond]]))
-    names(venn_list) <- sort(unique(seurat_i@meta.data[[x.cond]]))
-    for (i in 1:n_distinct(seurat_i@meta.data[[x.cond]])){ 
-      venn_list[[i]] <- seurat_i[, which(x = FetchData(object = seurat_i, vars = x.cond) == names(venn_list)[i])]@meta.data %>% filter(!is.na(CTaa)) %>% pull(CTaa)
-    }
-    if (length(unique(seurat_i@meta.data[[x.cond]])) <= 4){ # - max 4 lists to draw
-      p5.2A <- ggvenn(venn_list,
-            fill_color = color_conds(n_distinct(seurat_i@meta.data[[x.cond]])),
-            stroke_size = 0.5, set_name_size = 4) + 
-        ggtitle(paste0("Common & unique Clones according to ", x.cond)) +
-        theme(plot.title = element_text(hjust = 0.5))
-      ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2A_Venn-ClonalOverlap_", x.cond, ".pdf"), plot = p5.2A, scale = 1.5)
-    }
+		  # additional Venn Diagram (expected to be similar to clonal overlap raw) - max 4
+		  venn_list <- vector("list", n_distinct(seurat_i@meta.data[[x.cond]]))
+		  names(venn_list) <- sort(unique(seurat_i@meta.data[[x.cond]]))
+		  for (i in 1:n_distinct(seurat_i@meta.data[[x.cond]])){ 
+		    venn_list[[i]] <- seurat_i[, which(x = FetchData(object = seurat_i, vars = x.cond) == names(venn_list)[i])]@meta.data %>% filter(!is.na(CTaa)) %>% pull(CTaa)
+		  }
+		  if (length(unique(seurat_i@meta.data[[x.cond]])) <= 4){ # - max 4 lists to draw
+		    p5.2A <- ggvenn(venn_list,
+		          fill_color = color_conds(n_distinct(seurat_i@meta.data[[x.cond]])),
+		          stroke_size = 0.5, set_name_size = 4) + 
+		      ggtitle(paste0("Common & unique Clones according to ", x.cond)) +
+		      theme(plot.title = element_text(hjust = 0.5))
+		    ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2A_Venn-ClonalOverlap_", x.cond, ".pdf"), plot = p5.2A, scale = 1.5)
+		  }
 
-    # plot 2 vs. 2 venn diagrams
-    combination2v <- combn(names(venn_list), 2)
-    colv2 <- color_conds(n_distinct(seurat_i@meta.data[[x.cond]]))
-    names(colv2) <- sort(unique(seurat_i@meta.data[[x.cond]]))
-    pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2B_Venn-1vs1-ClonalOverlap_", x.cond, ".pdf"))
-    for (i in 1:ncol(combination2v)) {
-      set1 <- venn_list[[combination2v[1, i]]]
-      set2 <- venn_list[[combination2v[2, i]]]
-      list_i <- list(set1, set2)
-      names(list_i) <- c(combination2v[1, i], combination2v[2, i])
-      pi <- ggvenn(list_i,
-            fill_color = as.vector(colv2[names(list_i)]),
-            stroke_size = 0.5, set_name_size = 4) + 
-        ggtitle(paste0("Common & unique Clones according to ", x.cond)) +
-        theme(plot.title = element_text(hjust = 0.5))
-      print(pi)
-      }
-    dev.off()
-      
-    # venn Diagram for top100 clones per condition
-    venn_list_t100 <- vector("list", n_distinct(seurat_i@meta.data[[x.cond]]))
-    names(venn_list_t100) <- sort(unique(seurat_i@meta.data[[x.cond]]))
-    file_Names <- list.files(path = paste0(dir.name, "/", folders[4], "/", set, "/", x.cond), pattern = "6_TOP100_clonetypes_barplot.*xlsx$", recursive = T, full.names = T)
-    files <- lapply(file_Names, read_excel, sheet = 1)
-    names(files) <- dirname(list.files(path = paste0(dir.name, "/", folders[4], "/", set, "/", x.cond), pattern = "6_TOP100_clonetypes_barplot.*xlsx$",recursive = T))
+		  # plot 2 vs. 2 venn diagrams
+		  combination2v <- combn(names(venn_list), 2)
+		  colv2 <- color_conds(n_distinct(seurat_i@meta.data[[x.cond]]))
+		  names(colv2) <- sort(unique(seurat_i@meta.data[[x.cond]]))
+		  pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2B_Venn-1vs1-ClonalOverlap_", x.cond, ".pdf"))
+		  for (i in 1:ncol(combination2v)) {
+		    set1 <- venn_list[[combination2v[1, i]]]
+		    set2 <- venn_list[[combination2v[2, i]]]
+		    list_i <- list(set1, set2)
+		    names(list_i) <- c(combination2v[1, i], combination2v[2, i])
+		    pi <- ggvenn(list_i,
+		          fill_color = as.vector(colv2[names(list_i)]),
+		          stroke_size = 0.5, set_name_size = 4) + 
+		      ggtitle(paste0("Common & unique Clones according to ", x.cond)) +
+		      theme(plot.title = element_text(hjust = 0.5))
+		    print(pi)
+		    }
+		  dev.off()
+		    
+		  # venn Diagram for top100 clones per condition
+		  venn_list_t100 <- vector("list", n_distinct(seurat_i@meta.data[[x.cond]]))
+		  names(venn_list_t100) <- sort(unique(seurat_i@meta.data[[x.cond]]))
+		  file_Names <- list.files(path = paste0(dir.name, "/", folders[4], "/", set, "/", x.cond), pattern = "6_TOP100_clonetypes_barplot.*xlsx$", recursive = T, full.names = T)
+		  files <- lapply(file_Names, read_excel, sheet = 1)
+		  names(files) <- dirname(list.files(path = paste0(dir.name, "/", folders[4], "/", set, "/", x.cond), pattern = "6_TOP100_clonetypes_barplot.*xlsx$",recursive = T))
 
-    for (i in 1:length(names(files))){ 
-      venn_list_t100[[i]] <- seurat_i[, which(x = FetchData(object = seurat_i, vars = x.cond) == names(venn_list_t100)[i])]@meta.data %>% filter(CTaa %in% files[[i]][["CTaa"]]) %>% pull(CTaa)
-    }
-    if (length(unique(seurat_i@meta.data[[x.cond]])) <= 4){ # - max 4 lists to draw
-      p5.2C <- ggvenn(venn_list_t100,
-            fill_color = color_conds(n_distinct(seurat_i@meta.data[[x.cond]])),
-            stroke_size = 0.5, set_name_size = 4) + 
-        ggtitle(paste0("Top 100 most frequent clones per ", x.cond, " - Common & unique Clones")) +
-        theme(plot.title = element_text(hjust = 0.5))
-      ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2C_Venn-Top100_ClonalOverlap_", x.cond, ".pdf"), plot = p5.2C, scale = 1.5)
-      t5.2C <- list("common_clones" = Reduce(intersect, venn_list), "common_clones_t100" = Reduce(intersect, venn_list_t100))
-      sink(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2_VennCommonClonetypes_", x.cond, ".txt"))
-      print(t5.2C)
-      sink()
-      }
-    # add here venn diagrams with number of cells with commmon clones (same but now cells instead of unique clones to check absolute overlapping)
-    
-    
-    # highlight common clones to all conditions
-    common_clones <- seurat_i@meta.data %>%
-      group_by(CTaa) %>% # grouping AA clones
-      summarise("count"=n_distinct(get(x.cond))) %>% # count condition in each group
-      filter(count == length(unique(seurat_i@meta.data[[x.cond]]))) %>% select(CTaa) %>% # filter those groups that don't have all conditions presents
-      filter(!is.na(CTaa))
-    seurat_i <- highlightClonotypes(seurat_i, 
-                                  cloneCall= "aa", 
-                                  sequence = common_clones$CTaa)
-    seurat_i$common.clones <- seurat_i@meta.data %>% rowwise() %>%
-      mutate("is.common" = ifelse(is.na(highlight), highlight, "common_clones")) %>% pull(is.common)
-    p5.3A <- DimPlot(seurat_i, group.by = "highlight") + 
-      theme(plot.title = element_blank()) +
-      scale_color_manual(values = color_clones(length(common_clones$CTaa)), na.value="grey") +
-      theme(legend.text=element_text(size=rel(0.5)))
-    p5.3B <- DimPlot(seurat_i, group.by = "common.clones") + 
-      theme(plot.title = element_blank()) +
-      scale_color_manual(values = "red", na.value="grey") 
+		  for (i in 1:length(names(files))){ 
+		    venn_list_t100[[i]] <- seurat_i[, which(x = FetchData(object = seurat_i, vars = x.cond) == names(venn_list_t100)[i])]@meta.data %>% filter(CTaa %in% files[[i]][["CTaa"]]) %>% pull(CTaa)
+		  }
+		  if (length(unique(seurat_i@meta.data[[x.cond]])) <= 4){ # - max 4 lists to draw
+		    p5.2C <- ggvenn(venn_list_t100,
+		          fill_color = color_conds(n_distinct(seurat_i@meta.data[[x.cond]])),
+		          stroke_size = 0.5, set_name_size = 4) + 
+		      ggtitle(paste0("Top 100 most frequent clones per ", x.cond, " - Common & unique Clones")) +
+		      theme(plot.title = element_text(hjust = 0.5))
+		    ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2C_Venn-Top100_ClonalOverlap_", x.cond, ".pdf"), plot = p5.2C, scale = 1.5)
+		    t5.2C <- list("common_clones" = Reduce(intersect, venn_list), "common_clones_t100" = Reduce(intersect, venn_list_t100))
+		    sink(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2_VennCommonClonetypes_", x.cond, ".txt"))
+		    print(t5.2C)
+		    sink()
+		    }
+		  # add here venn diagrams with number of cells with commmon clones (same but now cells instead of unique clones to check absolute overlapping)
+		  
+		  
+		  # highlight common clones to all conditions
+		  common_clones <- seurat_i@meta.data %>%
+		    group_by(CTaa) %>% # grouping AA clones
+		    summarise("count"=n_distinct(get(x.cond))) %>% # count condition in each group
+		    filter(count == length(unique(seurat_i@meta.data[[x.cond]]))) %>% select(CTaa) %>% # filter those groups that don't have all conditions presents
+		    filter(!is.na(CTaa))
+		  seurat_i <- highlightClonotypes(seurat_i, 
+		                                cloneCall= "aa", 
+		                                sequence = common_clones$CTaa)
+		  seurat_i$common.clones <- seurat_i@meta.data %>% rowwise() %>%
+		    mutate("is.common" = ifelse(is.na(highlight), highlight, "common_clones")) %>% pull(is.common)
+		  p5.3A <- DimPlot(seurat_i, group.by = "highlight") + 
+		    theme(plot.title = element_blank()) +
+		    scale_color_manual(values = color_clones(length(common_clones$CTaa)), na.value="grey") +
+		    theme(legend.text=element_text(size=rel(0.5)))
+		  p5.3B <- DimPlot(seurat_i, group.by = "common.clones") + 
+		    theme(plot.title = element_blank()) +
+		    scale_color_manual(values = "red", na.value="grey") 
 
-    ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.3A_highlightCommonClonotypes_", x.cond, ".pdf"), plot = p5.3A, scale = 1.5)
-    ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.3B_highlightCommonClonotypes_", x.cond, ".pdf"), plot = p5.3B, scale = 1.5)
-    # create sankey diagram with ggplot
-    sankey_df <- seurat_i@meta.data %>% filter(CTaa %in% common_clones$CTaa) %>% distinct(CTaa, get(x.cond), cloneType) %>% tibble()
-    colnames(sankey_df) <- c("CTaa", x.cond, "cloneType")
-    write_xlsx(sankey_df, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.4_CommoncloneTypes_by", x.cond, ".xlsx"))
-    
-    p5.4 <- compareClonotypes(combined2, cloneCall="aa", clonotypes = pull(common_clones, CTaa), graph = "alluvial") +
-      scale_fill_manual(values = color_clones(length(common_clones$CTaa)))
-    ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.4A_AlluvialCommonClonotypes_", x.cond, ".pdf"), plot = p5.4, scale = 1.5, width = 8)
-    
-    ## upsetR plot (similar to venn diagrams)
-    message("Creating UpSetR plot")
-    all_data <- do.call(rbind.data.frame, combined2) %>% select(CTaa, x.cond)
+		  ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.3A_highlightCommonClonotypes_", x.cond, ".pdf"), plot = p5.3A, scale = 1.5)
+		  ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.3B_highlightCommonClonotypes_", x.cond, ".pdf"), plot = p5.3B, scale = 1.5)
+		  # create sankey diagram with ggplot
+		  sankey_df <- seurat_i@meta.data %>% filter(CTaa %in% common_clones$CTaa) %>% distinct(CTaa, get(x.cond), cloneType) %>% tibble()
+		  colnames(sankey_df) <- c("CTaa", x.cond, "cloneType")
+		  write_xlsx(sankey_df, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.4_CommoncloneTypes_by", x.cond, ".xlsx"))
+		  
+		  p5.4 <- compareClonotypes(combined2, cloneCall="aa", clonotypes = pull(common_clones, CTaa), graph = "alluvial") +
+		    scale_fill_manual(values = color_clones(length(common_clones$CTaa)))
+		  ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.4A_AlluvialCommonClonotypes_", x.cond, ".pdf"), plot = p5.4, scale = 1.5, width = 8)
+		  
+		  ## upsetR plot (similar to venn diagrams)
+		  message("Creating UpSetR plot")
+		  all_data <- do.call(rbind.data.frame, combined2) %>% select(CTaa, x.cond)
 
 
-      data_wide <-
-        all_data %>%
-        group_by(CTaa) %>%
-        count(get(x.cond)) %>% ## count how many clones per condition
-        mutate(match = 1,  ## boolean for a count at each condition
-            Total = sum(n))
-      
-      colnames(data_wide) <- c("CTaa", x.cond, "n", "match", "Total")
-      data_wide <- data_wide %>% 
-        pivot_wider(
-          id_cols = c(CTaa, Total),
-          names_from = x.cond,
-          values_from = match,
-          values_fill = list(match = 0)
-        )  ## fill empty cells with 0
-      level_present <- levels(seurat_i@meta.data[[x.cond]])[levels(seurat_i@meta.data[[x.cond]]) %in% colnames(data_wide)]
-      print(level_present)
-      ylabel <- "Number of Common Clones"
-      xlabel <- "Total Number of Unique Clones"
-      # Convert presence-matching columns in factor
-      data_wide <- data_wide %>% select(-Total) %>% as.data.frame()
-      print(colnames(data_wide))
-      data_wide <- data_wide[, c("CTaa", level_present)]
-      # Create graphic: UpSetR
-      print(dim(common_clones)[1])
-      print(common_clones)
-      pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2D-upsetR_intersect.pdf"), width = 15, height = 10)
-      if (dim(common_clones)[1] > 2){ # if more than 2 clones, highlight common
-          message("highlighting")
-          print(upset(
-              data_wide,
-              sets = level_present,
-              keep.order=T,
-              sets.bar.color = color_conds(length(level_present)),
-              order.by="freq",
-              text.scale = c(1.3, 1.3, 1.3, 1, 1.5, 2),
-              mainbar.y.label = ylabel,
-              sets.x.label = xlabel,
-              queries = list(
-                list(
-                query = intersects,
-                params = as.list(level_present),
-                active = T,
-                query.name = paste0("All levels - ", x.cond),
-                color = "orange"
-                ) #, # can add colors to any group of interactions of interest
-                # list(
-                # query = intersects,
-                # params = list(sort(unique(seurat_i@meta.data[[x.cond]]))[1], sort(unique(seurat_i@meta.data[[x.cond]]))[2]),
-                # active = T,
-                # query.name = "M0 vs",
-                # color = "red"
-                # )'
-              )
-          ))
-      } else{
-          print(upset(
-              data_wide,
-              sets = level_present,
-              keep.order=T,
-              sets.bar.color = color_conds(length(level_present)),
-              order.by="freq",
-              text.scale = c(1.3, 1.3, 1.3, 1, 1.5, 2),
-              mainbar.y.label = ylabel,
-              sets.x.label = xlabel,
-          ))
-      }
-      dev.off()
-      message("done upsetR")
-      write_xlsx(data_wide, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2D-upsetR_intersect.xlsx"))
-    
-    
-    message("Extract number of cells per clonal overlap - Barplot")
-    # extract number of cells per clonal overlap according to x.cond
-    if (length(unique(all_data[[x.cond]])) <=10){
-	  clon_cond <- all_data %>%
-			distinct(CTaa, !!sym(x.cond)) %>%
-			group_by(CTaa) %>%
-			summarise(Conditions = list(sort(unique(!!sym(x.cond))))) %>%
-			ungroup()
-			
-		cond_with_clones <- unique(unlist(clon_cond$Conditions))
-		all_cond <- sort(unique(all_data[[x.cond]]))
-		all_cond <- sort(intersect(all_cond, cond_with_clones))
+		    data_wide <-
+		      all_data %>%
+		      group_by(CTaa) %>%
+		      count(get(x.cond)) %>% ## count how many clones per condition
+		      mutate(match = 1,  ## boolean for a count at each condition
+		          Total = sum(n))
+		    
+		    colnames(data_wide) <- c("CTaa", x.cond, "n", "match", "Total")
+		    data_wide <- data_wide %>% 
+		      pivot_wider(
+		        id_cols = c(CTaa, Total),
+		        names_from = x.cond,
+		        values_from = match,
+		        values_fill = list(match = 0)
+		      )  ## fill empty cells with 0
+		    level_present <- levels(seurat_i@meta.data[[x.cond]])[levels(seurat_i@meta.data[[x.cond]]) %in% colnames(data_wide)]
+		    print(level_present)
+		    ylabel <- "Number of Common Clones"
+		    xlabel <- "Total Number of Unique Clones"
+		    # Convert presence-matching columns in factor
+		    data_wide <- data_wide %>% select(-Total) %>% as.data.frame()
+		    print(colnames(data_wide))
+		    data_wide <- data_wide[, c("CTaa", level_present)]
+		    # Create graphic: UpSetR
+		    print(dim(common_clones)[1])
+		    print(common_clones)
+		    pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2D-upsetR_intersect.pdf"), width = 15, height = 10)
+		    if (dim(common_clones)[1] > 2){ # if more than 2 clones, highlight common
+		        message("highlighting")
+		        print(upset(
+		            data_wide,
+		            sets = level_present,
+		            keep.order=T,
+		            sets.bar.color = color_conds(length(level_present)),
+		            order.by="freq",
+		            text.scale = c(1.3, 1.3, 1.3, 1, 1.5, 2),
+		            mainbar.y.label = ylabel,
+		            sets.x.label = xlabel,
+		            queries = list(
+		              list(
+		              query = intersects,
+		              params = as.list(level_present),
+		              active = T,
+		              query.name = paste0("All levels - ", x.cond),
+		              color = "orange"
+		              ) #, # can add colors to any group of interactions of interest
+		              # list(
+		              # query = intersects,
+		              # params = list(sort(unique(seurat_i@meta.data[[x.cond]]))[1], sort(unique(seurat_i@meta.data[[x.cond]]))[2]),
+		              # active = T,
+		              # query.name = "M0 vs",
+		              # color = "red"
+		              # )'
+		            )
+		        ))
+		    } else{
+		        print(upset(
+		            data_wide,
+		            sets = level_present,
+		            keep.order=T,
+		            sets.bar.color = color_conds(length(level_present)),
+		            order.by="freq",
+		            text.scale = c(1.3, 1.3, 1.3, 1, 1.5, 2),
+		            mainbar.y.label = ylabel,
+		            sets.x.label = xlabel,
+		        ))
+		    }
+		    dev.off()
+		    message("done upsetR")
+		    write_xlsx(data_wide, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2D-upsetR_intersect.xlsx"))
+		  
+		  
+		  message("Extract number of cells per clonal overlap - Barplot")
+		  # extract number of cells per clonal overlap according to x.cond
+		  if (length(unique(all_data[[x.cond]])) <=10){
+			clon_cond <- all_data %>%
+				distinct(CTaa, !!sym(x.cond)) %>%
+				group_by(CTaa) %>%
+				summarise(Conditions = list(sort(unique(!!sym(x.cond))))) %>%
+				ungroup()
+				
+			cond_with_clones <- unique(unlist(clon_cond$Conditions))
+			all_cond <- sort(unique(all_data[[x.cond]]))
+			all_cond <- sort(intersect(all_cond, cond_with_clones))
 
-		combinations <- unlist(lapply(1:length(all_cond), 
-				                     function(x) combn(all_cond, x, simplify = FALSE)), recursive = FALSE)
+			combinations <- unlist(lapply(1:length(all_cond), 
+						                   function(x) combn(all_cond, x, simplify = FALSE)), recursive = FALSE)
 
-		clon_in_comb <- function(comb, clon_cond) {
-			sapply(clon_cond$Conditions, function(cnds) all(comb %in% cnds))
-		}
-
-		results <- map_df(combinations, function(comb) {
-			presence <- clon_cond$CTaa[clon_in_comb(comb, clon_cond)]
-			if (length(presence) == 0) {
-				return(tibble(
-				  Combination = paste(comb, collapse = "&"),
-				  Num_Cells = 0,
-				  Num_Conditions = length(comb)
-				))
+			clon_in_comb <- function(comb, clon_cond) {
+				sapply(clon_cond$Conditions, function(cnds) all(comb %in% cnds))
 			}
-			n_cells <- all_data %>% filter(CTaa %in% presence) %>% nrow()
-			tibble(
-				Combination = paste(comb, collapse = "&"),
-				Num_Cells = n_cells,
-				Num_Conditions = length(comb)
-			)
-		})  %>% arrange(desc(Num_Cells))
-		results <- results %>%
-			mutate(Combination = as.character(Combination)) %>%
-			arrange(Num_Conditions, desc(Num_Cells)) %>%
-			mutate(Combination = factor(Combination, levels = unique(Combination)))
-		head(results)
-		bar_width <- max(0.2,min(0.9, 5/length(results$Combination)))
-		x_size <- max(5, min(12, 20 / log1p(length(unique(results$Combination)))))
-		p5.5 <- ggplot(results, aes(x = Combination, y = Num_Cells, fill = Num_Cells)) +
-			geom_col(width = bar_width, color = "black", fill = "#006699") +
-			labs(title = paste0("Number of cells per Intersection, according to ", x.cond, " intersection"),
-			     y = "Number of cells",
-			     x = "Intersection level") +
-			theme_minimal(base_size = 10) + 
-			theme(
-			  axis.text.x = element_text(angle = 45, hjust = 1, size = x_size),
-			  legend.position = "none",
-			  panel.grid.major.y = element_blank(),
-			  panel.grid.minor = element_blank(),
-			  plot.title = element_text(face = "bold"),
-			  plot.caption = element_text(size = 8, face = "italic")) + 
-			geom_text(aes(label = Num_Cells), 
-			  vjust = -0.5, 
-			  size = 4)
-	  ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-Intersect_NCells_per", x.cond, ".pdf"), plot = p5.5, scale = 1.5, width = 8)
-	  write_xlsx(results, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-NCells_intersect.xlsx"))
-	  }
-	  message("Draw scatterplots")
-    # Draw scatterplots zoomed/scaled
-    samples_list <- sort(names(combined2))
-    dir.create(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter/"))
-    for (tag in c("plot", "plot_zoomed")){
-	    pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter/scatter_compare-scaled_", tag, ".pdf"))
-	    for (i in seq_along(combined2)){
-	        print(i)
-	        for (j in c(seq_along(combined2)[c(i:length(combined2))])){
-	        if (all(i != j, i != samples_list[length(samples_list)])){
-	            print(j)
-				    	# Verify empty datasets
-						  if (nrow(combined2[[i]]) == 0 | nrow(combined2[[j]]) == 0) {
-						    message("Skipping empty dataset: ", samples_list[i], " or ", samples_list[j])
-						    next
-						  }
-						  if (!("CTaa" %in% colnames(combined2[[i]])) | !("CTaa" %in% colnames(combined2[[j]]))) {
-						    message("Missing CTaa column in ", samples_list[i], " or ", samples_list[j])
-						    next
-						  }
-	            xline <- combined2[[i]] %>% 
-	                    count(CTaa) %>% mutate(frequency = n / sum(n)) %>% 
-	                    arrange(desc(frequency)) %>% slice_head(n=100) %>% 
-	                    tail(1) %>% pull(frequency)
-	            yline <- combined2[[j]] %>% 
-	                    count(CTaa) %>% mutate(frequency = n / sum(n)) %>% 
-	                    arrange(desc(frequency)) %>% slice_head(n=100) %>% 
-	                    tail(1) %>% pull(frequency)
-	            lim <- max(unlist(lapply(combined2, function(x){
-	                z <- x %>% count(CTaa) %>% mutate(frequency = n / sum(n)) %>% pull(frequency) %>% max()
-	                return(z)})))
-	            
-	            print(xline)
-	            print(yline)
-						  tryCatch({
-						    if (tag == "plot") {
-						      p <- scatterClonotype(
-						        combined2,
-						        cloneCall = "aa",
-						        x.axis = samples_list[i],
-						        y.axis = samples_list[j],
-						        dot.size = "total",
-						        graph = "proportion"
-						      ) +
-						        scale_color_manual(values = c("#8B6914", "#336B66", "#7EC0EE", "#CDCD00", "#90EE90")) +
-						        geom_vline(xintercept = xline, col = "red", linetype = "dashed") +
-						        geom_hline(yintercept = yline, col = "red", linetype = "dashed") +
-						        coord_cartesian(xlim = c(0, lim), ylim = c(0, lim)) +
-						        scale_size_continuous(limits = c(1, 4000))
-						    } else {
-						      p <- scatterClonotype(
-						        combined2,
-						        cloneCall = "aa",
-						        x.axis = samples_list[i],
-						        y.axis = samples_list[j],
-						        dot.size = "total",
-						        graph = "proportion"
-						      ) +
-						        scale_color_manual(values = c("#8B6914", "#336B66", "#7EC0EE", "#CDCD00", "#90EE90")) +
-						        geom_vline(xintercept = xline, col = "red", linetype = "dashed") +
-						        geom_hline(yintercept = yline, col = "red", linetype = "dashed")
-						    }
 
-						    print(p)
-			          scatter_table <- scatterClonotype(combined2, 
-			                      cloneCall ="aa", 
-			                      x.axis = samples_list[i],
-			                      y.axis = samples_list[j],
-			                      dot.size = "total",
-			                      graph = "proportion", exportTable=T)
-			          write.table(scatter_table, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter/scatter_compare-", samples_list[i], ".vs.", samples_list[j],".tsv"), row.names = F, quote=F, sep = "\t")
-		        }, error = function(e) {
-		        	message("Error generating scatter for ",
-                  samples_list[i], " vs ", samples_list[j], ": ", e$message)})
-					} 
+			results <- map_df(combinations, function(comb) {
+				presence <- clon_cond$CTaa[clon_in_comb(comb, clon_cond)]
+				if (length(presence) == 0) {
+					return(tibble(
+						Combination = paste(comb, collapse = "&"),
+						Num_Cells = 0,
+						Num_Conditions = length(comb)
+					))
 				}
+				n_cells <- all_data %>% filter(CTaa %in% presence) %>% nrow()
+				tibble(
+					Combination = paste(comb, collapse = "&"),
+					Num_Cells = n_cells,
+					Num_Conditions = length(comb)
+				)
+			})  %>% arrange(desc(Num_Cells))
+			results <- results %>%
+				mutate(Combination = as.character(Combination)) %>%
+				arrange(Num_Conditions, desc(Num_Cells)) %>%
+				mutate(Combination = factor(Combination, levels = unique(Combination)))
+			head(results)
+			bar_width <- max(0.2,min(0.9, 5/length(results$Combination)))
+			x_size <- max(5, min(12, 20 / log1p(length(unique(results$Combination)))))
+			p5.5 <- ggplot(results, aes(x = Combination, y = Num_Cells, fill = Num_Cells)) +
+				geom_col(width = bar_width, color = "black", fill = "#006699") +
+				labs(title = paste0("Number of cells per Intersection, according to ", x.cond, " intersection"),
+					   y = "Number of cells",
+					   x = "Intersection level") +
+				theme_minimal(base_size = 10) + 
+				theme(
+					axis.text.x = element_text(angle = 45, hjust = 1, size = x_size),
+					legend.position = "none",
+					panel.grid.major.y = element_blank(),
+					panel.grid.minor = element_blank(),
+					plot.title = element_text(face = "bold"),
+					plot.caption = element_text(size = 8, face = "italic")) + 
+				geom_text(aes(label = Num_Cells), 
+					vjust = -0.5, 
+					size = 4)
+			ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-Intersect_NCells_per", x.cond, ".pdf"), plot = p5.5, scale = 1.5, width = 8)
+			write_xlsx(results, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-NCells_intersect.xlsx"))
 			}
-		dev.off()    
-		}
-    message("Scatterplots drawn")
+			message("Draw scatterplots")
+		  # Draw scatterplots zoomed/scaled
+		  samples_list <- sort(names(combined2))
+		  dir.create(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter/"))
+		  for (tag in c("plot", "plot_zoomed")){
+			  pdf(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter/scatter_compare-scaled_", tag, ".pdf"))
+			  for (i in seq_along(combined2)){
+			      print(i)
+			      for (j in c(seq_along(combined2)[c(i:length(combined2))])){
+			      if (all(i != j, i != samples_list[length(samples_list)])){
+			          print(j)
+						  	# Verify empty datasets
+								if (nrow(combined2[[i]]) == 0 | nrow(combined2[[j]]) == 0) {
+								  message("Skipping empty dataset: ", samples_list[i], " or ", samples_list[j])
+								  next
+								}
+								if (!("CTaa" %in% colnames(combined2[[i]])) | !("CTaa" %in% colnames(combined2[[j]]))) {
+								  message("Missing CTaa column in ", samples_list[i], " or ", samples_list[j])
+								  next
+								}
+			          xline <- combined2[[i]] %>% 
+			                  count(CTaa) %>% mutate(frequency = n / sum(n)) %>% 
+			                  arrange(desc(frequency)) %>% slice_head(n=100) %>% 
+			                  tail(1) %>% pull(frequency)
+			          yline <- combined2[[j]] %>% 
+			                  count(CTaa) %>% mutate(frequency = n / sum(n)) %>% 
+			                  arrange(desc(frequency)) %>% slice_head(n=100) %>% 
+			                  tail(1) %>% pull(frequency)
+			          lim <- max(unlist(lapply(combined2, function(x){
+			              z <- x %>% count(CTaa) %>% mutate(frequency = n / sum(n)) %>% pull(frequency) %>% max()
+			              return(z)})))
+			          
+			          print(xline)
+			          print(yline)
+								tryCatch({
+								  if (tag == "plot") {
+								    p <- scatterClonotype(
+								      combined2,
+								      cloneCall = "aa",
+								      x.axis = samples_list[i],
+								      y.axis = samples_list[j],
+								      dot.size = "total",
+								      graph = "proportion"
+								    ) +
+								      scale_color_manual(values = c("#8B6914", "#336B66", "#7EC0EE", "#CDCD00", "#90EE90")) +
+								      geom_vline(xintercept = xline, col = "red", linetype = "dashed") +
+								      geom_hline(yintercept = yline, col = "red", linetype = "dashed") +
+								      coord_cartesian(xlim = c(0, lim), ylim = c(0, lim)) +
+								      scale_size_continuous(limits = c(1, 4000))
+								  } else {
+								    p <- scatterClonotype(
+								      combined2,
+								      cloneCall = "aa",
+								      x.axis = samples_list[i],
+								      y.axis = samples_list[j],
+								      dot.size = "total",
+								      graph = "proportion"
+								    ) +
+								      scale_color_manual(values = c("#8B6914", "#336B66", "#7EC0EE", "#CDCD00", "#90EE90")) +
+								      geom_vline(xintercept = xline, col = "red", linetype = "dashed") +
+								      geom_hline(yintercept = yline, col = "red", linetype = "dashed")
+								  }
+
+								  print(p)
+					        scatter_table <- scatterClonotype(combined2, 
+					                    cloneCall ="aa", 
+					                    x.axis = samples_list[i],
+					                    y.axis = samples_list[j],
+					                    dot.size = "total",
+					                    graph = "proportion", exportTable=T)
+					        write.table(scatter_table, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/8-scatter/scatter_compare-", samples_list[i], ".vs.", samples_list[j],".tsv"), row.names = F, quote=F, sep = "\t")
+				      }, error = function(e) {
+				      	message("Error generating scatter for ",
+		                samples_list[i], " vs ", samples_list[j], ": ", e$message)})
+						} 
+					}
+				}
+			dev.off()    
+			}
+		  message("Scatterplots drawn")
+		 } else{message("Overlap section not available for single-condition assays")}
     # plot HEATMAPS: draw top_n clones frequency per subpopulations in cond vector
     if (length(cond) > 1){
         message("Draw Heatmaps")
@@ -1069,8 +1079,9 @@ message("ANALYSIS FINISHED")
 SaveH5Seurat(seurat, filename = paste0(dir.name, "/", folders[3], "/seurat_scRepertoire.h5Seurat"))
 Convert(paste0(dir.name, "/",folders[3], "/seurat_scRepertoire.h5Seurat"), dest = "h5ad")
 ' # no compatibility for seurat v4.3 & seuratdisk
-
-saveRDS(seurat_noViral, file = paste0(dir.name, "/",folders[4], "/seurat_scRepertoire-noViral.rds"))
+if (!is.null(seurat_noViral)){
+	saveRDS(seurat_noViral, file = paste0(dir.name, "/",folders[4], "/seurat_scRepertoire-noViral.rds"))
+}
 saveRDS(seurat, file = paste0(dir.name, "/",folders[4], "/seurat_scRepertoire.rds"))
 
 message("5. Seurat object was saved.")
