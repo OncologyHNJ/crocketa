@@ -119,12 +119,11 @@ p8 <- FeaturePlot(seurat, 'G2M.Score', pt.size =  0.75) + labs(title = "G2M phas
 ggsave(paste0(dir.name, "/", folders[3], "/4.5_g2mplot.pdf"), plot = p8, scale = 1.5)
 message("4. Variable plots on UMAP dimension were produced.")
 
-# 7.5. Dimplot for merged or integrated objects.
-if (seurat@active.assay == TRUE || seurat@project.name == "merged"){
-  Idents(seurat) <- "assay_name"
-  p3 <- DimPlot(seurat, reduction = "umap") 
-  ggsave(paste0(dir.name, "/", folders[3], "/2_umap_by_assay.pdf"), plot = p3, width = 8, height = 5)
-}
+# 7.5. Dimplot according to sample of origin.
+seurat@meta.data[["orig.ident"]] <- factor(seurat@meta.data[["orig.ident"]], levels = sort(unique(seurat@meta.data[["orig.ident"]])))
+Idents(seurat) <- seurat@meta.data[["orig.ident"]]
+p3 <- DimPlot(seurat, reduction = "umap") 
+ggsave(paste0(dir.name, "/", folders[3], "/2_umap_by_assay.pdf"), plot = p3, width = 8, height = 5)
 pdf(paste0(dir.name, "/", folders[3], "/umap_by_metadata_columns.pdf"), width = 5, height = 5)
 for (meta_col in batch_metadata){
 	if (meta_col %in% colnames(seurat@meta.data)){
