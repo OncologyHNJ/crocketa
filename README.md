@@ -3,7 +3,7 @@
 <br><br><br>
 <br><br><br>
 
-# *CROCKETA*: Pipeline for the multi-omic analysis of *scRNAseq + scTCR/BCRseq* data
+# *crocketa*: Pipeline for the multi-omic analysis of *scRNAseq + scTCR/BCRseq* data
 ###### Implemented by: 
 ***Gonzalo Soria-Alcaide***
 
@@ -17,17 +17,17 @@
 <img src="./.figs/Graphical_Abstract.png" align="right" width="500"/>
 <br clear="left"/>
 
-***CROCKETA*** (single-**C**ell **R**epertoire **O**rganization & **C**ombined **K**inetics **E**xploration for **T**ranscriptomic **A**nalysis) is an automated and adaptable [*Snakemake*](https://snakemake.readthedocs.io/en/stable/) pipeline designed to perform fundamental initial stages of single-cell analysis for both transcriptomic and immune repertoire data,
-with additional steps for detailed assay characterization. *CROCKETA* has the goal of integrating different types of sequencing data in a multi-omic approach while expanding the transcriptional analysis itself:
+***crocketa*** (single-**C**ell **R**epertoire **O**rganization & **C**ombined **K**inetics **E**xploration for **T**ranscriptomic **A**nalysis) is an automated and adaptable [*Snakemake*](https://snakemake.readthedocs.io/en/stable/) pipeline designed to perform fundamental initial stages of single-cell analysis for both transcriptomic and immune repertoire data,
+with additional steps for detailed assay characterization. *crocketa* has the goal of integrating different types of sequencing data in a multi-omic approach while expanding the transcriptional analysis itself:
 * Pipeline can be executed exclusively for *scRNAseq* data from multiple sequencing technologies.
 * [scRepertoire R Package](https://github.com/BorchLab/scRepertoire) if enabled allows integration of *scTCR/BCRseq* data as an intermediate module of the workflow in order to integrate clonotype information in downstream transcriptional analysis -such as DEAs, GSEAs or trajectory inference analysis- while accounting for immune repertoire analysis.
 * Integration with vdj data is currently limited to ***10x* sequencing technology**
 
 This pipeline uses state-of-the-art single-cell RNA-seq tools like [Seurat](https://satijalab.org/seurat/), [STARsolo](https://github.com/alexdobin/STAR/blob/master/docs/STARsolo.md), [Vision](https://github.com/yoseflab/VISION), [Slingshot](https://github.com/kstreet13/slingshot), [Velocyto](http://velocyto.org/), [Azimuth](https://azimuth.hubmapconsortium.org/), [SingleR](https://github.com/dviraran/SingleR), [DoubletFinder](https://github.com/chris-mcginnis-ucsf/DoubletFinder), [scRepertoire](https://github.com/BorchLab/scRepertoire) and [Immunarch](https://github.com/immunomind/immunarch).
 
-The use of Snakemake alongside [conda](https://docs.conda.io/en/latest/) package manager facilitates version control, software requirements, and reproducibility of the results which is the main purpose of this tool. Moreover, ***CROCKETA*** implements different ways to correct for batch effects, allowing an easy-to-follow pipeline for large-scale datasets.
+The use of Snakemake alongside [conda](https://docs.conda.io/en/latest/) package manager facilitates version control, software requirements, and reproducibility of the results which is the main purpose of this tool. Moreover, ***crocketa*** implements different ways to correct for batch effects, allowing an easy-to-follow pipeline for large-scale datasets.
 
-***CROCKETA*** has undergone rigurous testing for both *human* and *mouse* datasets.
+***crocketa*** has undergone rigurous testing for both *human* and *mouse* datasets.
 
 ### Input Data to analyse
 
@@ -62,7 +62,7 @@ The use of Snakemake alongside [conda](https://docs.conda.io/en/latest/) package
 10. [CITATION](#CITATION)
 
 ## 1. Pipeline configuration	
-*CROCKETA* is based on the previously published [Bollito workflow](https://github.com/cnio-bu/bollito) and follows a similar tool configuration and structure.  
+*crocketa* is based on the previously published [Bollito workflow](https://github.com/cnio-bu/bollito) and follows a similar tool configuration and structure.  
 
 Three input files must be provided to describe data structure, defining desired parameters and path to input files among others:
 * **config.yaml** contains all pipeline parameters.
@@ -73,7 +73,7 @@ Description of these files is provided below at section 1.B.
 
 ### 1.A- Installation & setup
 <details open>
-<summary><i>CROCKETA installation...</i></summary>
+<summary><i>crocketa installation...</i></summary>
 
 Workflow requires previous conda installation in order to handle package management for each of the analysis steps. Follow [bioconda installation instructions](https://conda.io/projects/conda/en/latest/user-guide/install/index.html#installing-conda). 
 Conda installation can be avoided if singularity is already installed by providing --use-singularity option when running the pipeline.
@@ -191,7 +191,7 @@ Some of the main available parameters are described below:
 <details open>
 <summary><i>Pipeline installation...</i></summary>
 
-The very first time the pipeline is installed, conda environments must be created. Configuration files must be properly structured before environment installation, otherwise *CROCKETA* will halt execution.
+The very first time the pipeline is installed, conda environments must be created. Configuration files must be properly structured before environment installation, otherwise *crocketa* will halt execution.
  
 Environments are created through the following command:
     
@@ -218,7 +218,7 @@ Some other flags are recommended:
 
     snakemake --use-conda -j 2 --until seurat_scRepertoire --rerun-incomplete --keep-going
 
-> TIP: --rerun-incomplete & --keep-going flags are highly advisable. This allows *CROCKETA* to re-analyze incomplete steps and progress as far as possible, maximizing the extraction of information despite minor errors.
+> TIP: --rerun-incomplete & --keep-going flags are highly advisable. This allows *crocketa* to re-analyze incomplete steps and progress as far as possible, maximizing the extraction of information despite minor errors.
 > --until flag defines last step of the flow. Every single snakemake rule can be used as target providing name as they appear in *config.yaml* file. 3 additional checkpoints not present in config file are: --until **expression_matrix** (until alignment step included),**qc_expression_matrix** (until single-cell QC step included) and **normalized_expression_matrix** (until single-cell normalization step included)
 
 </details>
@@ -226,7 +226,7 @@ Some other flags are recommended:
 ## 3. ANALYSIS OUTPUTS
 <img src="./.figs/Graphical_Abstract.png" align="right" width="350"/>
 
-*CROCKETA* is able to run end-to-end analysis, covering the entire process from data collection to final insights. Unique results for every single stage of the analysis are extracted. *CROCKETA* workflow might be splitted into 10 steps:
+*crocketa* is able to run end-to-end analysis, covering the entire process from data collection to final insights. Unique results for every single stage of the analysis are extracted. *crocketa* workflow might be splitted into 10 steps:
 
 <ul>
    <li><b>Stage 1: </b> FastQ Quality Control</li>
@@ -685,7 +685,7 @@ This approach ensures that the workflow remains portable, scalable, and reproduc
 computational infrastructures.
 
 ## CITATION
-If you ever use *CROCKETA* in your research, please refer the pipeline by citing us: [bioRxiv preprint](https://doi.org/10.1101/2025.05.16.654451)
+If you ever use *crocketa* in your research, please refer the pipeline by citing us: [bioRxiv preprint](https://doi.org/10.1101/2025.05.16.654451)
 
 <hr style="height:20px;border-width:0;color:gray;background-color:gray">
 <hr style="height:20px;border-width:0;color:gray;background-color:gray">
