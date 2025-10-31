@@ -3,11 +3,10 @@
 <br><br><br>
 <br><br><br>
 
-# *crocketa*
+<!-- Title and description -->
+<h1 align="left"> ***crocketa***</h1>
+<h3 align="left"> Pipeline for the multi-omic analysis of *scRNAseq + scTCR/BCRseq* data</h3>
 <br clear="left"/>
-
-### Pipeline for the multi-omic analysis of *scRNAseq + scTCR/BCRseq* data
-
 
 <!-- Badges aligned to the right -->
 <p align="right">
