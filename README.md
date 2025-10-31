@@ -6,8 +6,6 @@
 <!-- Title and description -->
 <h1 align="left"> <i>crocketa</i></h1>
 <h3 align="left"> Pipeline for the multi-omic analysis of <i>scRNAseq + scTCR/BCRseq</i> data</h3>
-<br clear="left"/>
-
 <!-- Badges aligned to the right -->
 <p align="right">
   <a href="LICENSE">
