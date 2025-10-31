@@ -4,7 +4,7 @@
 <br><br><br>
 
 <!-- Title and description -->
-<h1 align="left"> ***crocketa***</h1>
+<h1 align="left"> <i>crocketa</i></h1>
 <h3 align="left"> Pipeline for the multi-omic analysis of *scRNAseq + scTCR/BCRseq* data</h3>
 <br clear="left"/>
 
