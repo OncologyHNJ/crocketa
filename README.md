@@ -59,7 +59,8 @@ The use of Snakemake alongside [conda](https://docs.conda.io/en/latest/) package
 7. [Scanpy interoperability](#Scanpy-interoperability)
 8. [Known Issues](#Known-Issues)
 9. [Implementation Details](#Implementation-Details)
-10. [CITATION](#CITATION)
+10. [Test Data](#testData-Input)
+11. [CITATION](#CITATION)
 
 ## 1. Pipeline configuration	
 *crocketa* is based on the previously published [Bollito workflow](https://github.com/cnio-bu/bollito) and follows a similar tool configuration and structure.  
@@ -683,6 +684,15 @@ installation).
 
 This approach ensures that the workflow remains portable, scalable, and reproducible across diverse
 computational infrastructures.
+
+## testData Input
+To test the pipeline's operability, a sample dataset of human B cells is provided. This dataset contains approximately 500 cells randomly subsampled from the [10x original source](https://www.10xgenomics.com/datasets/human-b-cells-from-a-healthy-donor-1-k-cells-2-standard-6-0-0) with GEX + BCR sequencing available. which includes both GEX and BCR sequencing data.
+The corresponding configuration files for this example data (samples.tsv, units.tsv, and config.yaml) are also provided.
+
+Requirements to run the test:
+	1. Ensure the pipeline is installed correctly.
+	2. Download the necessary reference files required for alignment (e.g., .fa and .gtf) and not provided within ***crocketa*** installation.
+	3. Specify the correct paths to every file in your configuration file (samples, units and config files).
 
 ## CITATION
 If you ever use *crocketa* in your research, please refer the pipeline by citing us: [bioRxiv preprint](https://doi.org/10.1101/2025.05.16.654451)
