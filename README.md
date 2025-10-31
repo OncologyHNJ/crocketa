@@ -693,8 +693,8 @@ Requirements to run the test:
 
 1. Ensure the pipeline is installed correctly.
 2. Download the necessary reference files required for alignment (e.g., .fa and .gtf) and not provided within ***crocketa*** installation.
-3. Specify the correct paths to every file in your configuration file (samples, units and config files).
-
+3. Update the configuration files (samples.tsv, units.tsv, and config.yaml) by replacing all /path/to/ placeholder strings with the correct absolute paths to the files on your system.
+   
 ## CITATION
 If you ever use *crocketa* in your research, please refer the pipeline by citing us: [bioRxiv preprint](https://doi.org/10.1101/2025.05.16.654451)
 
