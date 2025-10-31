@@ -691,9 +691,9 @@ The corresponding configuration files for this example data (samples.tsv, units.
 
 Requirements to run the test:
 
-	1. Ensure the pipeline is installed correctly.
-	2. Download the necessary reference files required for alignment (e.g., .fa and .gtf) and not provided within ***crocketa*** installation.
-	3. Specify the correct paths to every file in your configuration file (samples, units and config files).
+1. Ensure the pipeline is installed correctly.
+2. Download the necessary reference files required for alignment (e.g., .fa and .gtf) and not provided within ***crocketa*** installation.
+3. Specify the correct paths to every file in your configuration file (samples, units and config files).
 
 ## CITATION
 If you ever use *crocketa* in your research, please refer the pipeline by citing us: [bioRxiv preprint](https://doi.org/10.1101/2025.05.16.654451)
