@@ -245,7 +245,7 @@ Some other flags are recommended:
 </details>
 
 ## 3. ANALYSIS OUTPUTS
-<img src="./.figs/Graphical_Abstract.png" align="right" width="350"/>
+<img src="./.figs/Graphical_Abstract.jpeg" align="right" width="350"/>
 
 *crocketa* is able to run end-to-end analysis, covering the entire process from data collection to final insights. Unique results for every single stage of the analysis are extracted. *crocketa* workflow might be splitted into 10 steps:
 
