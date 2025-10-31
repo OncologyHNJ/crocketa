@@ -4,15 +4,6 @@
 <br><br><br>
 
 # *crocketa*: Pipeline for the multi-omic analysis of *scRNAseq + scTCR/BCRseq* data
-###### Implemented by: 
-***Gonzalo Soria-Alcaide***
-
-*Marta Portasany-Rodríguez*
-
-*Jorge García-Martínez*
-
-###### Citation: [DOI 10.1101/2025.05.16.654451](https://doi.org/10.1101/2025.05.16.654451)
-
 <!-- Badges aligned to the right -->
 <p align="right">
   <a href="LICENSE">
@@ -29,6 +20,15 @@
          src="https://zenodo.org/badge/DOI/10.5281/zenodo.17305511.svg">
   </a>
 </p>
+
+###### Implemented by: 
+***Gonzalo Soria-Alcaide***
+
+*Marta Portasany-Rodríguez*
+
+*Jorge García-Martínez*
+
+###### Citation: [DOI 10.1101/2025.05.16.654451](https://doi.org/10.1101/2025.05.16.654451)
 
 ## Introduction
 
