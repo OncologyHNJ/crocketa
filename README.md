@@ -388,7 +388,7 @@ This stage of the analysis (if enabled) will take as input the seurat.rds object
 
 Also, condition of interest should be defined (default takes clustering resolution as condition, but any interesting metadata column can be added to the list).
 
-##### Using pre-existing cellRanger Output
+#### Using pre-existing cellRanger Output
 If you already have these files, or input format is *matrix*, cellranger might be disabled and a directory storing all csv files can be provided in the config variable input_csv. Files must be stored using sample name (matching samples.tsv column) as prefix: {sample}_filtered_contig_annotations.csv. Provided directory must be root for vdj_t and vdj_b directories containing their corresponding contig annotation files as follows:
 ```
 [path_specified_in_input_csv]/ ├── vdj_t/ ├── {sample_A}_filtered_contig_annotations.csv 
