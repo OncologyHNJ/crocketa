@@ -386,7 +386,7 @@ The scRepertoire script is developed based on the coding script provided as a **
 #### INPUT
 This stage of the analysis (if enabled) will take as input the seurat.rds object provided as output from the find-clusters step: ***{outdir}/seurat/merged/3_clustering/seurat_find-clusters.rds***. This step allows the integration of the *filtered_contig_annotations.csv* file per sample to the seurat object, previously extracted in *CellRanger* step.
 
-If you already have these files, or input format is *matrix*, cellranger might be disabled and a directory storing all csv files can be provided in the config variable input_csv. Files must be stored using sample name (matching samples.tsv column) as prefix: {sample}_filtered_contig_annotations.csv. Provided directory must be root for vdj_b and vdj_b directories containing their corresponding contig annotation files.
+If you already have these files, or input format is *matrix*, cellranger might be disabled and a directory storing all csv files can be provided in the config variable input_csv. Files must be stored using sample name (matching samples.tsv column) as prefix: {sample}_filtered_contig_annotations.csv. Provided directory must be root for vdj_t and vdj_b directories containing their corresponding contig annotation files.
 
 Also, condition of interest should be defined (default takes clustering resolution as condition, but any interesting metadata column can be added to the list).
 
