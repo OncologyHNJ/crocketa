@@ -12,6 +12,24 @@
 *Jorge García-Martínez*
 
 ###### Citation: [DOI 10.1101/2025.05.16.654451](https://doi.org/10.1101/2025.05.16.654451)
+
+<!-- Badges aligned to the right -->
+<p align="right">
+  <a href="LICENSE">
+    <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
+  </a>
+  <img alt="Snakemake v7.32.4" src="https://img.shields.io/badge/Snakemake-v7.32.4-blue">
+  <img alt="Conda environment" src="https://img.shields.io/badge/Conda-environment-green">
+  <a href="https://doi.org/10.1101/2025.05.16.654451">
+    <img alt="bioRxiv preprint DOI: 10.1101/2025.05.16.654451"
+         src="https://img.shields.io/badge/preprint-bioRxiv-blue">
+  </a>
+  <a href="https://doi.org/10.5281/zenodo.17305511">
+    <img alt="Zenodo DOI: 10.5281/zenodo.17305511"
+         src="https://zenodo.org/badge/DOI/10.5281/zenodo.17305511.svg">
+  </a>
+</p>
+
 ## Introduction
 
 <img src="./.figs/Graphical_Abstract.png" align="right" width="500"/>
