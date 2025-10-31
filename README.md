@@ -5,7 +5,6 @@
 
 # *crocketa*
 <br clear="left"/>
-
 ### Pipeline for the multi-omic analysis of *scRNAseq + scTCR/BCRseq* data
 
 <!-- Badges aligned to the right -->
