@@ -704,7 +704,7 @@ This approach ensures that the workflow remains portable, scalable, and reproduc
 computational infrastructures.
 
 ## testData Input
-To test the pipeline's operability, a sample dataset of human B cells is provided. This dataset contains approximately 500 cells randomly subsampled from the [10x original source](https://www.10xgenomics.com/datasets/human-b-cells-from-a-healthy-donor-1-k-cells-2-standard-6-0-0) with GEX + BCR sequencing available. which includes both GEX and BCR sequencing data.
+To test the pipeline's operability, a sample dataset of human B cells is provided. This dataset contains approximately 500 cells randomly subsampled from the [10x original source](https://www.10xgenomics.com/datasets/human-b-cells-from-a-healthy-donor-1-k-cells-2-standard-6-0-0) which includes both GEX and BCR sequencing data.
 The corresponding configuration files for this example data (samples.tsv, units.tsv, and config.yaml) are also provided.
 
 Requirements to run the test:
