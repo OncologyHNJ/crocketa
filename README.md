@@ -32,7 +32,7 @@
 
 ## Introduction
 
-<img src="./.figs/Graphical_Abstract.png" align="right" width="500"/>
+<img src="./.figs/Graphical_Abstract.jpeg" align="right" width="500"/>
 <br clear="left"/>
 
 ***crocketa*** (single-**C**ell **R**epertoire **O**rganization & **C**ombined **K**inetics **E**xploration for **T**ranscriptomic **A**nalysis) is an automated and adaptable [*Snakemake*](https://snakemake.readthedocs.io/en/stable/) pipeline designed to perform fundamental initial stages of single-cell analysis for both transcriptomic and immune repertoire data,
