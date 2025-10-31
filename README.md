@@ -690,6 +690,7 @@ To test the pipeline's operability, a sample dataset of human B cells is provide
 The corresponding configuration files for this example data (samples.tsv, units.tsv, and config.yaml) are also provided.
 
 Requirements to run the test:
+
 	1. Ensure the pipeline is installed correctly.
 	2. Download the necessary reference files required for alignment (e.g., .fa and .gtf) and not provided within ***crocketa*** installation.
 	3. Specify the correct paths to every file in your configuration file (samples, units and config files).
