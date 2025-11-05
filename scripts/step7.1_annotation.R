@@ -33,12 +33,12 @@ sctype_score = snakemake@params[["sctype_score"]]
 source(sctype_gsPrepare) # "scripts/scType-gene_sets_prepare.R"
 source(sctype_score) # "scripts/scType-sctype_score.R"
 
-'
+
 # load gene set preparation function from github
-source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/gene_sets_prepare.R")
+# source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/gene_sets_prepare.R")
 # load cell type annotation function from github
-source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/sctype_score_.R")
-'
+# source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/sctype_score_.R")
+
 message("1. Libraries were loaded.")
 # 2. Folder configuration. 
 case = snakemake@params[["case"]]
@@ -105,16 +105,16 @@ if (case == "lowercase"){
   interest_feat <- str_to_lower(interest_feat)
 }
 
-interest_feat <- unique(interest_feat[interest_feat %in% rownames(seurat)])
+interest_feat <- interest_feat[interest_feat %in% rownames(seurat)]
 if (length(interest_feat) > 1){
 	pdf(paste0(dir.name, "/", folders[6], "/1.1_Expression_check_interest.pdf"))
-	print(DotPlot(seurat, features = interest_feat,        
-		    cols = "RdBu") + RotatedAxis() +  
-	  ggplot2::theme(axis.text.x=element_text(angle=90,hjust=1)))
+	DotPlot(seurat, features = interest_feat,        
+		    cols = "RdBu", cluster.idents=T) + RotatedAxis() +  
+	  ggplot2::theme(axis.text.x=element_text(angle=90,hjust=1))
 	stacked <- ifelse(length(interest_feat) ==1, FALSE, TRUE) # if only one gene, non-stacked vlnplot
-	print(VlnPlot(seurat, interest_feat, stack = stacked, flip = T) + NoLegend())
+	VlnPlot(seurat, interest_feat, stack = stacked, flip = T) + NoLegend()
 	for (i in seq(1, length(interest_feat), 1)){
-		print(FeaturePlot(seurat, interest_feat[i], raster=FALSE,
+		print(FeaturePlot(seurat, interest_feat[i], raster = F,
 		                  reduction = "umap", label = FALSE, repel = TRUE, order = TRUE) &   
 		        scale_colour_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")))
 		        }
@@ -136,12 +136,13 @@ if (is.null(gmx_dir) == F){
     # parsing below created for genes ranked according to log2FC
     # if only gene names provided, just skip the parsing below and pull gene names
     for (i in seq(1,length(file_Names))) {
-      pdf(paste0(dir.name, "/", folders[6], "/1.2_", names(files)[i], "_Marker_gene_expression.pdf"), height = 30)  
-      print(paste0("Testing gene expression for: ", names(files)[i]))
+      file_i_name <- names(files)[i]
+      pdf(paste0(dir.name, "/", folders[6], "/1.2_", file_i_name, "_Marker_gene_expression.pdf"), height = 15)  
+      print(paste0("Testing gene expression for: ", file_i_name))
       df_perFile <- files[[i]]
       for (j in seq(1,length(colnames(df_perFile)))) {
-        print(paste0("Testing gene expression for: ", names(files)[i], "--", colnames(df_perFile)[j]))
-        gene_sign <- df_perFile[,j]
+        print(paste0("Testing gene expression for: ", file_i_name, "--", colnames(df_perFile)[j]))
+        gene_sign <- df_perFile[,j] %>% str_to_upper()
         if (case == "titlecase"){
 	  gene_sign <- str_to_title(gene_sign)
 	}
@@ -162,21 +163,22 @@ if (is.null(gmx_dir) == F){
               ggtitle(colnames(df_perFile)[j]) + NoLegend())
           }
           if (length(gene_sign) < 5){
-            for (i in seq(1, length(gene_sign),1))
+            for (i in seq(1, length(gene_sign),1)){
             print(FeaturePlot(seurat, gene_sign[i], 
                        reduction = "umap", label = FALSE, repel = TRUE, order = TRUE) &   
              scale_colour_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")))
     
-          print(DoHeatmap(seurat, gene_sign, angle = 90) &
+          print(DoHeatmap(seurat, gene_sign, slot = "data", angle = 90) &
             scale_fill_gradientn(colours =rev(RColorBrewer::brewer.pal(n = 8, 
                                                                 name = "BrBG"))))        
           }
         }
       }
+      }
       dev.off()
     
    message("check addModuleScores")
-    pdf(paste0(dir.name, "/", folders[6], "/1.3_", names(files)[i], "_AddModuleScore.pdf"))
+    pdf(paste0(dir.name, "/", folders[6], "/1.3_", file_i_name, "_AddModuleScore.pdf"))
     for (module in colnames(seurat@meta.data)[grepl("AddModuleScore_",
                                           colnames(seurat@meta.data))]){
       if (all(seurat[[module]] != "NaN")){
@@ -189,7 +191,24 @@ if (is.null(gmx_dir) == F){
       }                                      
     }
     dev.off()
+    message("plot genes contained in dataframe")
+    pdf(paste0(dir.name, "/", folders[6], "/1.3_", file_i_name, "_featurePlots.pdf"))
+    genes_full <- unlist(df_perFile)
+    if (case == "titlecase"){
+	    genes_full <- str_to_title(genes_full)
+	  }
+	  if (case == "lowercase"){
+	    genes_full <- str_to_lower(genes_full)
+	  }
+	  genes_full <- genes_full[genes_full %in% rownames(seurat)]
+	  for (i in seq(1, length(genes_full),1)){
+            print(FeaturePlot(seurat, genes_full[i], 
+                       reduction = "umap", label = FALSE, repel = TRUE, order = TRUE) &   
+             scale_colour_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")))
+    }
+    dev.off()
     
+    message("remove stored scores")
     seurat@meta.data[,grepl("AddModuleScore_", colnames(seurat@meta.data))] <- NULL # remove the scoring columns
 
 }
@@ -307,13 +326,14 @@ for (x in c("non_restrict", "restrict")){ # analyze both options
 
 
 		# plot cell types on UMAP
-		seurat@meta.data$scType_annotation = ""
+		tag_ann <- paste0("scType_annotation_", x)
+		seurat@meta.data[[tag_ann]] = ""
 		for(j in unique(sctype_scores$cluster)){
-		cl_type = sctype_scores[sctype_scores$cluster==j,]; 
-		seurat@meta.data$scType_annotation[seurat@meta.data[["seurat_clusters"]] == j] = as.character(cl_type$type[1])
+		  cl_type = sctype_scores[sctype_scores$cluster==j,]; 
+		  seurat@meta.data[[tag_ann]][seurat@meta.data[["seurat_clusters"]] == j] = as.character(cl_type$type[1])
 		}
 
-		p1 <- DimPlot(seurat, reduction = "umap", label = FALSE, repel = TRUE, group.by = 'scType_annotation') +
+		p1 <- DimPlot(seurat, reduction = "umap", label = FALSE, repel = TRUE, group.by = tag_ann) +
 				theme(legend.text=element_text(size=rel(0.5)))
 		ggsave(paste0(dir.name, "/", folders[6], "/2.3_scType_annotation_",x,".pdf"), plot = p1, scale = 1.5)
 		write.xlsx(cL_results, paste0(dir.name, "/", folders[6], "/2.3_scType_annotation_scores_perCluster_",x,".xlsx"), row.names = TRUE)
@@ -348,7 +368,7 @@ for (x in c("non_restrict", "restrict")){ # analyze both options
 		    dev.off()
 		    message("2.4. scType Summary of the scType analysis is plotted")
 		}
-		cond <- "scType_annotation"
+		cond <- "scType_annotation_non_restrict"
 		data <- as.data.frame(table(seurat$orig.ident, seurat@meta.data[[cond]]))
 		data <- transform(data, rel = Freq / ave(Freq, Var1, FUN = sum))
 		pdf(paste0(dir.name, "/", folders[6], "/2.5_scType-perCellType_perOrig_plot.pdf"), width = 10)
