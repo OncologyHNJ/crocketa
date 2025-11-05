@@ -224,7 +224,16 @@ message("Clonetype Data has been integrated to seurat")
 print(colnames(seurat)[1])
 print(full.combined[[1]][["barcode"]][1])
 print(head(full.combined[[1]]))
-for (i in seq_along(contig_list)) {
+if (cells %in% c("T-AB", "T-GD")){
+  if (cells %in% "B-cells"){
+    contig_job <- contig_list
+    } else{
+    contig_job <- T_contig
+    }
+  } else{
+  contig_job <- B_contig
+}
+for (i in seq_along(contig_job)) {
     if (sum(full.combined[[i]][["barcode"]] %in% colnames(seurat)) == 0){
         stop("No barcode matching seurat & combined repertoire data, check barcode re-formating")
     }
