@@ -200,7 +200,7 @@ if (is.null(gmx_dir) == F){
 	  if (case == "lowercase"){
 	    genes_full <- str_to_lower(genes_full)
 	  }
-	  genes_full <- genes_full[genes_full %in% rownames(seurat)]
+	  genes_full <- unique(genes_full[genes_full %in% rownames(seurat)])
 	  for (i in seq(1, length(genes_full),1)){
             print(FeaturePlot(seurat, genes_full[i], 
                        reduction = "umap", label = FALSE, repel = TRUE, order = TRUE) &   
