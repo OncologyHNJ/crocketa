@@ -1091,7 +1091,7 @@ message("ANALYSIS FINISHED")
 SaveH5Seurat(seurat, filename = paste0(dir.name, "/", folders[3], "/seurat_scRepertoire.h5Seurat"))
 Convert(paste0(dir.name, "/",folders[3], "/seurat_scRepertoire.h5Seurat"), dest = "h5ad")
 ' # no compatibility for seurat v4.3 & seuratdisk
-if (!is.null(seurat_noViral)){
+if (!is.null(samples_vdj_T)){
 	saveRDS(seurat_noViral, file = paste0(dir.name, "/",folders[4], "/seurat_scRepertoire-noViral.rds"))
 }
 saveRDS(seurat, file = paste0(dir.name, "/",folders[4], "/seurat_scRepertoire.rds"))
