@@ -490,8 +490,11 @@ for (x.cond in cond){
   if(!(x.cond %in% colnames(seurat@meta.data))){
     stop("The specified condition is not available.")
   }
-  sets <- ifelse(is.null(seurat_noViral), "Full_assay", c("Full_assay", "Non_Viral_assay"))
-  print(sets)
+  if (is.null(samples_vdj_T)) {
+	sets <- "Full_assay"
+  } else {
+	sets <- c("Full_assay", "Non_Viral_assay")
+  }
   for (set in sets){
     message(paste0("1- Performing repertoire Analysis for ", set, " - According to ", x.cond))
     dir.create(paste0(dir.name, "/", folders[4], "/", set))
