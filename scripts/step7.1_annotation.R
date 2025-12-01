@@ -267,9 +267,9 @@ for (x in c("non_restrict", "restrict")){ # analyze both options
 		dir.create(paste0(dir.name, "/", folders[6], "/2.1_scType_annotation_perCluster/"))
 		pdf(paste0(dir.name, "/", folders[6], "/2.1_scType_Barplot_annotation_perCluster_", x,".pdf"), paper = "a4r", width = 20)
 		for (pop in levels(cL_results$cluster)){ # per cluster, estimate population for the different labels identified:
-		table_ci <- cL_results %>% filter(cluster == pop) %>% select(c(scores))
+		table_ci <- cL_results %>% filter(cluster == pop) %>% select(c(type, scores))
 		print(barplot(table_ci$scores, cex.names = 0.3, space = 15,
-						col = "#69b3a2", las = 1, names.arg = rownames(table_ci), ylab = "scType Score", xlab = "Cell Label", main = paste0("Cells annotated in cluster ", pop)))
+						col = "#69b3a2", las = 1, names.arg = table_ci$type, ylab = "scType Score", xlab = "Cell Label", main = paste0("Cells annotated in cluster ", pop)))
 		write.xlsx(table_ci, paste0(dir.name, "/", folders[6], "/2.1_scType_annotation_perCluster/2.1_scType_annotation_Cluster_",pop,"_",x,".xlsx"), row.names = TRUE)
 		}
 		dev.off()
