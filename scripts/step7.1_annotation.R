@@ -337,7 +337,23 @@ for (x in c("non_restrict", "restrict")){ # analyze both options
 				theme(legend.text=element_text(size=rel(0.5)))
 		ggsave(paste0(dir.name, "/", folders[6], "/2.3_scType_annotation_",x,".pdf"), plot = p1, scale = 1.5)
 		write.xlsx(cL_results, paste0(dir.name, "/", folders[6], "/2.3_scType_annotation_scores_perCluster_",x,".xlsx"), row.names = TRUE)
-
+		
+		# export annotation to tsv
+		ann_df <- data.frame(
+			"Cluster" = seurat$seurat_clusters,
+			"Annotation" = seurat@meta.data[[tag_ann]]
+		)
+		ann_df_perCluster <- ann_df %>%
+			group_by(Cluster) %>%
+			summarise(
+				Final_Annotation = names(which.max(table(Annotation))) 
+			)
+		write.table(ann_df_perCluster, 
+				        file = paste0(dir.name, "/", folders[6], "/2.3_scType_annotation_",x,".tsv"), 
+				        sep = "\t", 
+				        quote = FALSE, 
+				        row.names = FALSE)
+				        
 		message("2.3. scType Results are obtained and plotted")
         
 		# prepare edges
@@ -395,7 +411,6 @@ for (x in c("non_restrict", "restrict")){ # analyze both options
 		    theme_minimal() +
 		    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)))
 		dev.off()
-		
 		message("scType analysis finished")
 	}
 }
