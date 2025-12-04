@@ -328,10 +328,8 @@ for (x in c("non_restrict", "restrict")){ # analyze both options
 		# plot cell types on UMAP
 		tag_ann <- paste0("scType_annotation_", x)
 		seurat@meta.data[[tag_ann]] = ""
-		for(j in unique(sctype_scores$cluster)){
-		  cl_type = sctype_scores[sctype_scores$cluster==j,]; 
-		  seurat@meta.data[[tag_ann]][seurat@meta.data[["seurat_clusters"]] == j] = as.character(cl_type$type[1])
-		}
+		cluster_to_type <- setNames(sctype_scores$type, as.character(sctype_scores$cluster))
+		seurat@meta.data[[tag_ann]] <- cluster_to_type[as.character(Idents(seurat))]
 
 		p1 <- DimPlot(seurat, reduction = "umap", label = FALSE, repel = TRUE, group.by = tag_ann) +
 				theme(legend.text=element_text(size=rel(0.5)))
