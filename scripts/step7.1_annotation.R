@@ -340,7 +340,7 @@ for (x in c("non_restrict", "restrict")){ # analyze both options
 		ann_df <- data.frame(
 			"Cluster" = seurat$seurat_clusters,
 			"Annotation" = seurat@meta.data[[tag_ann]]
-		)
+		) %>% arrange(as.numeric(Cluster))
 		ann_df_perCluster <- ann_df %>%
 			group_by(Cluster) %>%
 			summarise(
