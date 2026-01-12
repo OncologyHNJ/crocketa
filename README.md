@@ -240,7 +240,7 @@ Some other flags are recommended:
     snakemake --use-conda -j 2 --until seurat_scRepertoire --rerun-incomplete --keep-going
 
 > TIP: --rerun-incomplete & --keep-going flags are highly advisable. This allows *crocketa* to re-analyze incomplete steps and progress as far as possible, maximizing the extraction of information despite minor errors.
-> --until flag defines last step of the flow. Every single snakemake rule can be used as target providing name as they appear in *config.yaml* file. 3 additional checkpoints not present in config file are: --until **expression_matrix** (until alignment step included),**qc_expression_matrix** (until single-cell QC step included) and **normalized_expression_matrix** (until single-cell normalization step included)
+> --until flag defines last step of the flow. Every single snakemake rule can be used as target providing name as they appear in *config.yaml* file. 3 additional checkpoints not present in config file are: --until **expression_matrix** (until alignment step included),**qc_expression_matrix** (until single-cell QC step included) and **normalized_expression_matrix** (until single-cell normalization step included).
 
 </details>
 
@@ -689,6 +689,10 @@ As described in bollito documentation, and maintained in this new workflow, AnnD
 * *Error: File not found:* Properly check spelling of sample columns and file paths.
 * *Error in STAR:* FATAL ERROR in input read file: the total length of barcode sequence is XX not equal to expected YY. *Solution: Check technology version and barcode whitelist specified. 10x v3 expects 28 nts length (16 Barcode + 12 UMI) as YY, v2 expects 26 (16 Barcode + 10 UMI), v1 expects 24 (14 Barcode + 10 UMI)*
 * *Error in CellRanger*: CellRanger will create a new directory to save results. If any previous execution for a specific sample has been aborted, there might already be a cellranger existing folder when re-running the execution, and an error will arise. *Solution: Remove the pre-existing CellRanger sample-associated directory of results - {out_dir}/cellranger/{sample}/{sample}_cellR/*
+* To prevent the pipeline from unnecessarily re-running from scratch (e.g., after minor configuration edits), use the --rerun-triggers mtime flag. This ensures that tasks are only executed if input files are newer than their corresponding outputs. Note: This requires having previously executed snakemake --touch to synchronize timestamps.
+  
+		snakemake --touch
+		snakemake --use-conda -j 2 --until seurat_scRepertoire --rerun-incomplete --keep-going --rerun-triggers mtime
 
 ## Implementation Details
 The pipeline was developed and tested on Ubuntu 24.04 LTS but is designed to run seamlessly on any standard Linux distribution. For Windows users, it can be easily deployed within a Docker container,
