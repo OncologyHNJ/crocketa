@@ -335,7 +335,7 @@ for (x in c("non_restrict", "restrict")){ # analyze both options
 				theme(legend.text=element_text(size=rel(0.5)))
 		ggsave(paste0(dir.name, "/", folders[6], "/2.3_scType_annotation_",x,".pdf"), plot = p1, scale = 1.5)
 		p2 <- DimPlot(seurat, reduction = "umap", label = TRUE, repel = TRUE, group.by = tag_ann) +
-				theme(legend.text=element_text(size=rel(0.5)))
+				theme(legend.text=element_text(size=rel(0.5))) + NoLegend()
 		ggsave(paste0(dir.name, "/", folders[6], "/2.3_scType_annotation_labeled_",x,".pdf"), plot = p2, scale = 1.5)
 		write.xlsx(cL_results, paste0(dir.name, "/", folders[6], "/2.3_scType_annotation_scores_perCluster_",x,".xlsx"), row.names = TRUE)
 		
