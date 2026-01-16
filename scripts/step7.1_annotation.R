@@ -334,13 +334,16 @@ for (x in c("non_restrict", "restrict")){ # analyze both options
 		p1 <- DimPlot(seurat, reduction = "umap", label = FALSE, repel = TRUE, group.by = tag_ann) +
 				theme(legend.text=element_text(size=rel(0.5)))
 		ggsave(paste0(dir.name, "/", folders[6], "/2.3_scType_annotation_",x,".pdf"), plot = p1, scale = 1.5)
+		p2 <- DimPlot(seurat, reduction = "umap", label = TRUE, repel = TRUE, group.by = tag_ann) +
+				theme(legend.text=element_text(size=rel(0.5)))
+		ggsave(paste0(dir.name, "/", folders[6], "/2.3_scType_annotation_labeled_",x,".pdf"), plot = p2, scale = 1.5)
 		write.xlsx(cL_results, paste0(dir.name, "/", folders[6], "/2.3_scType_annotation_scores_perCluster_",x,".xlsx"), row.names = TRUE)
 		
 		# export annotation to tsv
 		ann_df <- data.frame(
 			"Cluster" = seurat$seurat_clusters,
 			"Annotation" = seurat@meta.data[[tag_ann]]
-		) %>% arrange(as.numeric(Cluster))
+		)
 		ann_df_perCluster <- ann_df %>%
 			group_by(Cluster) %>%
 			summarise(
@@ -385,6 +388,8 @@ for (x in c("non_restrict", "restrict")){ # analyze both options
 		cond <- "scType_annotation_non_restrict"
 		data <- as.data.frame(table(seurat$orig.ident, seurat@meta.data[[cond]]))
 		data <- transform(data, rel = Freq / ave(Freq, Var1, FUN = sum))
+		data$Var1 <- factor(data$Var1, 
+                    levels = str_sort(unique(data$Var1), numeric = TRUE))
 		pdf(paste0(dir.name, "/", folders[6], "/2.5_scType-perCellType_perOrig_plot.pdf"), width = 10)
 		# A) individual barplots per cell type
 		print(ggplot(data, aes(x = factor(Var1), y = Freq, fill = factor(Var2))) +
