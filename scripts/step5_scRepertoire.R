@@ -47,6 +47,8 @@ relative = snakemake@params[["relative"]]
 clonetypes = snakemake@params[["cloneTypes"]]
 samples_path = snakemake@params[["samples_path"]]
 samples_df = read.table(samples_path, header = T, quote = "", sep = "\t")
+sample_ids <- unique(na.omit(samples_df$sample)) # filter-out vdj files stored at the same root but which are not present in current samples file
+                                
 n = snakemake@params[["n_CTaa"]]
 
 message("2. Folder paths were set.")
@@ -117,6 +119,12 @@ if (cellranger_enabled){
 if (length(csv_files) == 0){
   stop("No contig annotation csv file loaded")
 }
+csv_files <- csv_files[
+  sapply(csv_files, function(x) {
+    any(vapply(sample_ids, grepl, logical(1), x = x))
+  })
+] # only those vdj results present in samples file will be retained.
+
 contig_list <- lapply(csv_files, function(file) {
   tryCatch({
     read.csv(file, header = TRUE)
@@ -490,11 +498,11 @@ for (x.cond in cond){
   if(!(x.cond %in% colnames(seurat@meta.data))){
     stop("The specified condition is not available.")
   }
-  if (is.null(samples_vdj_T)) {
-	sets <- "Full_assay"
-  } else {
-	sets <- c("Full_assay", "Non_Viral_assay")
-  }
+	if (is.null(samples_vdj_T)) {
+		sets <- "Full_assay"
+	} else {
+		sets <- c("Full_assay", "Non_Viral_assay")
+	}
   for (set in sets){
     message(paste0("1- Performing repertoire Analysis for ", set, " - According to ", x.cond))
     dir.create(paste0(dir.name, "/", folders[4], "/", set))
@@ -936,7 +944,7 @@ for (x.cond in cond){
 					plot.caption = element_text(size = 8, face = "italic")) + 
 				geom_text(aes(label = Num_Cells), 
 					vjust = -0.5, 
-					size = 4)
+					size = 3)
 			ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-Intersect_NCells_per", x.cond, ".pdf"), plot = p5.5, scale = 1.5, width = 8)
 			write_xlsx(results, paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/5.2E-NCells_intersect.xlsx"))
 			}
