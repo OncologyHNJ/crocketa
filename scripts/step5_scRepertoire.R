@@ -527,38 +527,7 @@ for (x.cond in cond){
 
 		t1.2 <- table(seurat_i@meta.data[["clonotype.detected"]], seurat_i@meta.data[[x.cond]])
 		write_xlsx(as.data.frame(t1.2), paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/1.2_IdentifiedClones_Dimplot_by_", x.cond, ".xlsx"))
-
-    ' 
-    # 2,3 plots from scRepertoire package are not relevant
-    ## 2 - clonalOverlay
-    p2 <- clonalOverlay(seurat_i, 
-                  reduction = "umap", 
-                  freq.cutpoint = 30, 
-                  bins = 10, 
-                  facet = "ident") + 
-                    guides(color = "none")
-    ggsave(paste0(dir.name, "/", folders[4], "/", x.cond, "/2_ClonalOverlay.pdf"), plot = p2, scale = 1.5)
-    # add params for freq.cutpoint & bins (& patient/condition facet?)
-
-    ## 3 - ClonalNetwork
-    #No Identity filter
-    p3 <- clonalNetwork(seurat_i, 
-                  reduction = "umap", 
-                  identity = "ident",
-                  filter.clones = NULL,
-                  filter.identity = NULL,
-                  cloneCall = "aa")
-    ggsave(paste0(dir.name, "/", folders[4], "/", x.cond, "/3_ClonalNetwork.pdf"), plot = p3, scale = 1.5)
-    # and export table
-    t3 <- clonalNetwork(seurat_i, 
-                      reduction = "umap", 
-                      identity = "ident",
-                      filter.clones = NULL,
-                      filter.identity = NULL,
-                      cloneCall = "aa", exportTable = T)
-    write_xlsx(t3, paste0(dir.name, "/", folders[4], "/", x.cond, "/3_ClonalNetwork.xlsx"))
-    # or select a specific class in filter.identity to only plot network involving this group
-    '
+	  
     # Clones identified by subgroups
     final_df <- NULL
     seurat_i@meta.data[[x.cond]] <- as.factor(seurat_i@meta.data[[x.cond]])
@@ -672,17 +641,6 @@ for (x.cond in cond){
     ## additional clonal plots
     combined2 <- expression2List(seurat_i, 
                               split.by = x.cond)
-    '
-    # 10.2 Clonal Homeostasis
-    p10_2 <- clonalHomeostasis(combined2, 
-                      cloneCall = "aa") +
-        scale_fill_manual(values = c(color_vector(col)))
-    ggsave(paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/3.2_ClonalHomeostasis_", x.cond, ".pdf"), plot = p10_2, scale = 1.5)
-    t10_2 <- clonalHomeostasis(combined2, 
-                      cloneCall = "aa",
-                      exportTable = T)
-    write_xlsx(as.data.frame(t10_2), paste0(dir.name, "/", folders[4], "/", set, "/", x.cond, "/3.2_ClonalHomeostasis_", x.cond, ".xlsx"))
-    '
     # 10.3 Clonal Proportion
     p4 <- clonalProportion(combined2, 
                     cloneCall = "aa") +
@@ -1094,11 +1052,6 @@ for (x.cond in cond){
   }
 }
 message("ANALYSIS FINISHED")
-'
-# 7.8. Save Seurat objects in AnnData
-SaveH5Seurat(seurat, filename = paste0(dir.name, "/", folders[3], "/seurat_scRepertoire.h5Seurat"))
-Convert(paste0(dir.name, "/",folders[3], "/seurat_scRepertoire.h5Seurat"), dest = "h5ad")
-' # no compatibility for seurat v4.3 & seuratdisk
 if (!is.null(samples_vdj_T)){
 	saveRDS(seurat_noViral, file = paste0(dir.name, "/",folders[4], "/seurat_scRepertoire-noViral.rds"))
 }
