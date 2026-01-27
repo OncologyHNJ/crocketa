@@ -692,7 +692,7 @@ As described in bollito documentation, and maintained in this new workflow, AnnD
 * To prevent the pipeline from unnecessarily re-running from scratch (e.g., after minor configuration edits), use the --rerun-triggers mtime flag. This ensures that tasks are only executed if input files are newer than their corresponding outputs. Note: This requires having previously executed snakemake --touch to synchronize timestamps.
   
 		snakemake --touch
-		snakemake --use-conda -j 2 --until --rerun-incomplete --keep-going --rerun-triggers mtime
+		snakemake --use-conda -j 2 --rerun-incomplete --keep-going --rerun-triggers mtime
 
 ## Implementation Details
 The pipeline was developed and tested on Ubuntu 24.04 LTS but is designed to run seamlessly on any standard Linux distribution. For Windows users, it can be easily deployed within a Docker container,
