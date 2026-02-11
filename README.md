@@ -325,10 +325,12 @@ Additionally, multiqc can also report some per-sample results regarding the alig
 <summary><i>Step 4...</i></summary>
 
 #### 4.1. Cell-level QC & filtering:
-Config files allows to specify specific threshold to consider high-quality cells according to: minimal and maximum number of UMIs, number of Molecules (counts), maximum % of mitochondrial/ribosomal gene expression per cell. In addition, rare genes may be filtered out specifying minimal number of cells expressing the genes (default: 3).
+Config files allows to specify specific threshold to consider high-quality cells according to: minimal and maximum number of UMIs, number of Molecules (counts), maximum % of mitochondrial/ribosomal gene expression per cell. In addition, rare genes may be filtered out specifying minimal number of cells expressing the genes. Default values are specified according to golden-stardards in the field: minimal UMIs > [200-500], %mitochondrial < 20%, %ribosomal < 40%, but experienced users are able to properly fit parameters to their specific research.
+
 Moreover, cells expressing specific marker genes over/under a specified threshold can be easily excluded (*filter_out*)
 
-Doublets can also be statistically inferred and removed for each sample through [***DoubletFinder***](https://github.com/chris-mcginnis-ucsf/DoubletFinder) R software, if enabled by the user.
+Doublets can also be statistically inferred and removed for each sample through [***DoubletFinder***](https://github.com/chris-mcginnis-ucsf/DoubletFinder) R software, if enabled by the user. Maximum UMI threshold may be ignored (set to NULL) as doublets are already assessed through this step.
+
 ##### OUTPUT:
 * Violin plots regarding pre/post- filtered seurat objects are provided alongside statistical tables to describe the different sample-specific assays.
 Additional pre/post- DoubletFinder step plot is also provided if enabled.
@@ -342,7 +344,7 @@ Additional pre/post- DoubletFinder step plot is also provided if enabled.
 #### 4.2. Data Normalization:
 > NOTE: Once all single samples have been pre-processed, all are combined into a single object if merged = True, and output is now stored at ****{outdir}/seurat/merged/***
 
-Normalization can be performed with both standard method or applying SCT transformation to data. User can define the number of *variable features* to consider and regression might be applied according to any considered condition in order to reduce batch effects or other technical fluctuations (e.g. merge effect, cell cycle/mitochondrial/ribosomal expression)
+Normalization can be performed with both standard method or applying SCT transformation to data. User can define the number of *variable features* to consider (default: 2000) and regression might be applied according to any considered condition in order to reduce batch effects or other technical fluctuations (e.g. merge effect, cell cycle/mitochondrial/ribosomal expression)
 
 When excessive batch effect is present, an Integration step can be applied.
 
@@ -360,8 +362,8 @@ When excessive batch effect is present, an Integration step can be applied.
 This stage of the analysis will take as input the seurat.rds object provided as output from the normalization step : ****{outdir}/seurat/merged/2_normalization/seurat_normalized-pcs.rds***.
 
 Cell clustering is performed in a standard way, applying user-defined statistical parameters such as:
-* Number of PCs -Principal Components- according to {outdir}/seurat/merged/2_normalization/3_elbowplot.pdf
-* Resolution parameter defining granularity of the clustering. Various clusterings are extracted and stored in seurat object by default.
+* Number of PCs -Principal Components- which should be edited according to {outdir}/seurat/merged/2_normalization/3_elbowplot.pdf (default: 20)
+* Resolution parameter defining granularity of the clustering. Various clusterings are extracted and stored in seurat object by default [0.1-1.2]
 * K neighbors (default: 20)
 
 *LISI* scores are also extracted for user-defined resolutions/conditions.
