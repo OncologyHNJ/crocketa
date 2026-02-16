@@ -80,7 +80,8 @@ The use of Snakemake alongside [conda](https://docs.conda.io/en/latest/) package
 8. [Known Issues](#Known-Issues)
 9. [Implementation Details](#Implementation-Details)
 10. [Test Data](#testData-Input)
-11. [CITATION](#CITATION)
+11. [Dependencies](#Dependencies)
+12. [CITATION](#CITATION)
 
 ## 1. Pipeline configuration	
 *crocketa* is based on the previously published [Bollito workflow](https://github.com/cnio-bu/bollito) and follows a similar tool configuration and structure.  
@@ -727,6 +728,14 @@ Requirements to run the test:
 2. Download the necessary reference files required for alignment (e.g., .fa and .gtf) and not provided within ***crocketa*** installation.
 3. Update the configuration files (samples.tsv, units.tsv, and config.yaml) by replacing all /path/to/ placeholder strings with the correct absolute paths to the files on your system.
    
+## 11. Dependencies
+Most of the required versions are already specified at the envs/ directory files.
+* Snakemake = 7.32.4
+* STAR = 2.7.3
+* CellRanger = 7.2.0
+* R-base = 4.3
+* scRepertoire=1.10.0
+
 ## CITATION
 If you ever use *crocketa* in your research, please refer the pipeline by citing us: [bioRxiv preprint](https://doi.org/10.1101/2025.05.16.654451)
 
