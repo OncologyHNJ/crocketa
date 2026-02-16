@@ -728,12 +728,13 @@ Requirements to run the test:
 2. Download the necessary reference files required for alignment (e.g., .fa and .gtf) and not provided within ***crocketa*** installation.
 3. Update the configuration files (samples.tsv, units.tsv, and config.yaml) by replacing all /path/to/ placeholder strings with the correct absolute paths to the files on your system.
    
-## 11. Dependencies
-Most of the required versions are already specified at the envs/ directory files.
+## 11. Environment specifications
+All required versions are already satisfied at the envs/ directory files or mentioned at [1.A- Installation & setup](#1a--installation--setup).
 * Snakemake = 7.32.4
 * STAR = 2.7.3
 * CellRanger = 7.2.0
 * R-base = 4.3
+* Seurat = 4.3.0
 * scRepertoire=1.10.0
 
 ## CITATION
