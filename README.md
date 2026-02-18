@@ -80,7 +80,7 @@ The use of Snakemake alongside [conda](https://docs.conda.io/en/latest/) package
 8. [Known Issues](#Known-Issues)
 9. [Implementation Details](#Implementation-Details)
 10. [Test Data](#testData-Input)
-11. [Environment specifications](#11-Environment-specifications)
+11. [Environment specifications](#Environment-specifications)
 12. [CITATION](#CITATION)
 
 ## 1. Pipeline configuration	
@@ -728,7 +728,7 @@ Requirements to run the test:
 2. Download the necessary reference files required for alignment (e.g., .fa and .gtf) and not provided within ***crocketa*** installation.
 3. Update the configuration files (samples.tsv, units.tsv, and config.yaml) by replacing all /path/to/ placeholder strings with the correct absolute paths to the files on your system.
    
-## 11. Environment specifications
+## Environment specifications
 All required versions are already satisfied at the envs/ directory files or mentioned at [1.A- Installation & setup](#1a--installation--setup).
 * Snakemake = 7.32.4
 * STAR = 2.7.3
