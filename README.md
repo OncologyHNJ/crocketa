@@ -80,7 +80,7 @@ The use of Snakemake alongside [conda](https://docs.conda.io/en/latest/) package
 8. [Known Issues](#Known-Issues)
 9. [Implementation Details](#Implementation-Details)
 10. [Test Data](#testData-Input)
-11. [Dependencies](#Dependencies)
+11. [Environment specifications](#Environment-specifications)
 12. [CITATION](#CITATION)
 
 ## 1. Pipeline configuration	
@@ -736,6 +736,8 @@ All required versions are already satisfied at the envs/ directory files or ment
 * R-base = 4.3
 * Seurat = 4.3.0
 * scRepertoire=1.10.0
+* numpy==1.23.5
+* java11
 
 ## CITATION
 If you ever use *crocketa* in your research, please refer the pipeline by citing us: [bioRxiv preprint](https://doi.org/10.1101/2025.05.16.654451)
