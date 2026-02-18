@@ -80,7 +80,7 @@ The use of Snakemake alongside [conda](https://docs.conda.io/en/latest/) package
 8. [Known Issues](#Known-Issues)
 9. [Implementation Details](#Implementation-Details)
 10. [Test Data](#testData-Input)
-11. [Environment specifications](#Environment-specifications)
+11. [Environment specifications](#11-Environment-specifications)
 12. [CITATION](#CITATION)
 
 ## 1. Pipeline configuration	
