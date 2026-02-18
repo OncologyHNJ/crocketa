@@ -729,15 +729,15 @@ Requirements to run the test:
 3. Update the configuration files (samples.tsv, units.tsv, and config.yaml) by replacing all /path/to/ placeholder strings with the correct absolute paths to the files on your system.
    
 ## Environment specifications
-All required versions are already satisfied at the envs/ directory files or mentioned at [1.A- Installation & setup](#1a--installation--setup).
+All required versions are already satisfied at the envs/ directory files and external installation are detailed at [1.A- Installation & setup](#1a--installation--setup).
 * Snakemake = 7.32.4
 * STAR = 2.7.3
-* CellRanger = 7.2.0
+* CellRanger = 7.2.0 (external)
 * R-base = 4.3
 * Seurat = 4.3.0
 * scRepertoire=1.10.0
 * numpy==1.23.5
-* java11
+* java11 (external)
 
 ## CITATION
 If you ever use *crocketa* in your research, please refer the pipeline by citing us: [bioRxiv preprint](https://doi.org/10.1101/2025.05.16.654451)
