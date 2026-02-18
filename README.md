@@ -735,8 +735,8 @@ All required versions are already satisfied at the envs/ directory files and ext
 * CellRanger = 7.2.0 (external)
 * R-base = 4.3
 * Seurat = 4.3.0
-* scRepertoire=1.10.0
-* numpy==1.23.5
+* scRepertoire = 1.10.0
+* numpy = 1.23.5
 * java11 (external)
 
 ## CITATION
