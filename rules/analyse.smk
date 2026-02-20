@@ -10,7 +10,12 @@ rule seurat_qc:
     benchmark:
         f"{LOGDIR}/seurat/{{sample}}/1_preprocessing/{{sample}}.preQC.bmk"
     params:
-        input_dir = lambda wc: "{}/star/{}".format(OUTDIR,wc.sample),
+        input_dir = lambda wc: (
+            f"{OUTDIR}/cellranger/{wc.sample}/{wc.sample}_cellR/outs/multi/count/raw_feature_bc_matrix" 
+            if is_cmo_run() 
+            else f"{OUTDIR}/star/{wc.sample}/Solo.out/Gene/raw"
+        ),
+        is_cmo = lambda wc: is_cmo_run(), # Pasamos un booleano a R para facilitar la lógica
         output_dir = f"{OUTDIR}/seurat/{{sample}}",
         samples_path = config["samples"],
         units_path = config["units"],
@@ -211,7 +216,6 @@ rule seurat_find_clusters:
         seurat_obj=f"{OUTDIR}/seurat/{{sample}}/2_normalization/seurat_normalized-pcs.rds"
     output:
         seurat_obj=f"{OUTDIR}/seurat/{{sample}}/3_clustering/seurat_find-clusters.rds",
-        anndata_obj=f"{OUTDIR}/seurat/{{sample}}/3_clustering/seurat_find-clusters.h5ad",
         UMAP_perAssay=report(f"{OUTDIR}/seurat/{{sample}}/3_clustering/2_umap_by_assay.pdf", caption="../report/conf/dimplot_UMAP.rst", category="4_Clustering"),
         clustree=report(f"{OUTDIR}/seurat/{{sample}}/3_clustering/1_clustree.pdf", caption="../report/conf/clustree.rst", category="4_Clustering")
     log:
@@ -233,38 +237,97 @@ rule seurat_find_clusters:
         get_resource("seurat_find_clusters","threads")
     script:
         "../scripts/step4_find-clusters.R"
-
-rule scanpy_load_anndata:
-    input:
-        anndata_obj=f"{OUTDIR}/seurat/{{sample}}/3_clustering/seurat_find-clusters.h5ad"
-    output:
-        check=f"{OUTDIR}/scanpy/{{sample}}/check.txt"
-    log:
-        f"{LOGDIR}/scanpy/{{sample}}/check.log"
-    benchmark:
-        f"{LOGDIR}/scanpy/{{sample}}/check.bmk"
-    params:
-        output_dir = f"{OUTDIR}/scanpy/{{sample}}",
-    conda: "../envs/scanpy.yaml"
-    resources:
-        mem_mb=get_resource("seurat_find_clusters","mem_mb"),
-        walltime=get_resource("seurat_find_clusters","walltime")
-    threads: 
-        get_resource("seurat_find_clusters","threads")
-    script:
-        "../scripts/readAnnData.py"
-
-rule seurat_scRepertoire:
+        
+rule seurat_annotation:
     input:
         seurat_obj=f"{OUTDIR}/seurat/{{sample}}/3_clustering/seurat_find-clusters.rds"
     output:
-        seurat_obj=f"{OUTDIR}/seurat/{{sample}}/4_scRepertoire/seurat_scRepertoire.rds",
-        Identified_clones=report(f"{OUTDIR}/seurat/{{sample}}/4_scRepertoire/0.2_IdentifiedClones_Dimplot.pdf", caption="../report/conf/vdj_clones.rst", category="5_ImmuneRepertoire"),
-        Clonetype_Freqs=report(f"{OUTDIR}/seurat/{{sample}}/4_scRepertoire/0.1_Clonetype_freqs_DimPlot.pdf", caption="../report/conf/CTaa_freqs.rst", category="5_ImmuneRepertoire")
+        seurat_obj=f"{OUTDIR}/seurat/{{sample}}/4_annotation/seurat_annotated.rds",
+        scType_ann=report(f"{OUTDIR}/seurat/{{sample}}/4_annotation/2.3_scType_annotation_non_restrict.pdf", caption="../report/conf/scType_ann.rst", category="4_Annotation")
     log:
-        f"{LOGDIR}/seurat/{{sample}}/4_scRepertoire/{{sample}}.scRepertoire.log"
+        f"{LOGDIR}/seurat/{{sample}}/4_annotation/{{sample}}.annotation.log"
     benchmark:
-        f"{LOGDIR}/seurat/{{sample}}/4_scRepertoire/{{sample}}.scRepertoire.bmk"
+        f"{LOGDIR}/seurat/{{sample}}/4_annotation/{{sample}}.annotation.bmk"
+    params:
+        output_dir = f"{OUTDIR}/seurat/{{sample}}",
+        random_seed = config["random_seed"],
+        sctype_gsPrepare = f"./scripts/scType-gene_sets_prepare.R",
+        sctype_score = f"./scripts/scType-sctype_score.R",
+        sctype_autoDetect = f"./scripts/scType-auto_detect_tissue_type.R",
+        interest_feat = config["parameters"]["seurat_annotation"]["interest_feat"],
+        gmx_dir = config["parameters"]["seurat_annotation"]["gmx_dir"],
+        ident_cond = config["parameters"]["seurat_annotation"]["ident_cond"],
+        tissue_scType = config["parameters"]["seurat_annotation"]["tissue_scType"],
+        scType_ref = config["parameters"]["seurat_annotation"]["ref_scType"],
+        restrict_REF_scType = config["parameters"]["seurat_annotation"]["restrict_REF_scType"],
+        ref_singleR = config["parameters"]["seurat_annotation"]["ref_singleR"],
+        label_singleR = config["parameters"]["seurat_annotation"]["label_singleR"],
+        case = config["case"]
+    conda: "../envs/seurat_annotation.yaml"
+    resources:
+        mem_mb=get_resource("seurat_annotation","mem_mb"),
+        walltime=get_resource("seurat_annotation","walltime")
+    threads: 
+        get_resource("seurat_annotation","threads")
+    script:
+        "../scripts/step5.1_annotation.R"
+
+rule seurat_annotation_scANVI:
+    input:
+        seurat_obj=f"{OUTDIR}/seurat/{{sample}}/4_annotation/seurat_annotated.rds"
+    output:
+        seurat_obj=f"{OUTDIR}/seurat/{{sample}}/4_annotation/seurat_annotated_scanvi.rds",
+        scANVI_ann=report(f"{OUTDIR}/seurat/{{sample}}/4_annotation/scANVI/scANVI_predictions-seurat_umap.pdf", caption="../report/conf/scType_ann.rst", category="4_Annotation")
+    log:
+        f"{LOGDIR}/seurat/{{sample}}/4_annotation/{{sample}}.scANVI.annotation.log"
+    benchmark:
+        f"{LOGDIR}/seurat/{{sample}}/4_annotation/{{sample}}.scANVI.annotation.bmk"
+    params:
+        output_dir = f"{OUTDIR}/seurat/{{sample}}",
+        random_seed = config["random_seed"]
+    conda: "../envs/scanvi.yaml"
+    resources:
+        mem_mb=get_resource("seurat_annotation","mem_mb"),
+        walltime=get_resource("seurat_annotation","walltime")
+    threads: 
+        get_resource("seurat_annotation","threads")
+    script:
+        "../scripts/step5.3_annotation_scANVI.py"
+        
+rule seurat_annotation_AZIMUTH:
+    input:
+        seurat_obj=f"{OUTDIR}/seurat/{{sample}}/3_clustering/seurat_find-clusters.rds"
+    output:
+        f"{OUTDIR}/seurat/{{sample}}/4_annotation/9.4.1_Azimuth_annotation.tsv"
+    log:
+        f"{LOGDIR}/seurat/{{sample}}/4_annotation/{{sample}}.Azimuth_annotation.log"
+    benchmark:
+        f"{LOGDIR}/seurat/{{sample}}/4_annotation/{{sample}}.Azimuth_annotation.bmk"
+    params:
+        output_dir = f"{OUTDIR}/seurat/{{sample}}",
+        random_seed = config["random_seed"],
+        ident_cond = config["parameters"]["seurat_annotation_AZIMUTH"]["ident_cond"],
+        reference = config["parameters"]["seurat_annotation_AZIMUTH"]["reference"]
+    conda: "../envs/seurat_annotation_AZIMUTH.yaml"
+    resources:
+        mem_mb=get_resource("seurat_annotation_AZIMUTH","mem_mb"),
+        walltime=get_resource("seurat_annotation_AZIMUTH","walltime")
+    threads: 
+        get_resource("seurat_annotation_AZIMUTH","threads")
+    script:
+        "../scripts/step5.2_annotation_AZIMUTH.R"
+
+rule seurat_scRepertoire:
+    input:
+        seurat_obj=get_optional_repertoire_input
+    output:
+        seurat_obj=f"{OUTDIR}/seurat/{{sample}}/5_scRepertoire/seurat_scRepertoire.rds",
+        Identified_clones=report(f"{OUTDIR}/seurat/{{sample}}/5_scRepertoire/0.2_IdentifiedClones_Dimplot.pdf", caption="../report/conf/vdj_clones.rst", category="5_ImmuneRepertoire"),
+        Clonetype_Freqs=report(f"{OUTDIR}/seurat/{{sample}}/5_scRepertoire/0.1_Clonetype_freqs_DimPlot.pdf", caption="../report/conf/CTaa_freqs.rst", category="5_ImmuneRepertoire")
+    log:
+        f"{LOGDIR}/seurat/{{sample}}/5_scRepertoire/{{sample}}.scRepertoire.log"
+    benchmark:
+        f"{LOGDIR}/seurat/{{sample}}/5_scRepertoire/{{sample}}.scRepertoire.bmk"
     params:
         output_dir = f"{OUTDIR}/seurat/{{sample}}",
         random_seed = config["random_seed"],
@@ -289,17 +352,17 @@ rule seurat_scRepertoire:
     threads: 
         get_resource("seurat_scRepertoire","threads")
     script:
-        "../scripts/step5_scRepertoire.R"
+        "../scripts/step6_scRepertoire.R"
 
 rule seurat_degs:
     input:
-        seurat_obj=get_optional_repertoire_input
+        seurat_obj=get_optional_postAnn_input
     output:
-        seurat_obj=f"{OUTDIR}/seurat/{{sample}}/5_degs/seurat_degs.rds"
+        seurat_obj=f"{OUTDIR}/seurat/{{sample}}/6_degs/seurat_degs.rds"
     log:
-        f"{LOGDIR}/seurat/{{sample}}/5_degs/{{sample}}.seurat_degs.log"
+        f"{LOGDIR}/seurat/{{sample}}/6_degs/{{sample}}.seurat_degs.log"
     benchmark:
-        f"{LOGDIR}/seurat/{{sample}}/5_degs/{{sample}}.seurat_degs.bmk"
+        f"{LOGDIR}/seurat/{{sample}}/6_degs/{{sample}}.seurat_degs.bmk"
     params:
         output_dir = f"{OUTDIR}/seurat/{{sample}}",
         random_seed = config["random_seed"],
@@ -313,76 +376,18 @@ rule seurat_degs:
     threads: 
         get_resource("seurat_degs","threads")
     script:
-        "../scripts/step6_degs.R"
-
-rule seurat_annotation_AZIMUTH:
-    input:
-        seurat_obj=get_optional_repertoire_input
-    output:
-        f"{OUTDIR}/seurat/{{sample}}/6_annotation/9.4.1_Azimuth_annotation.tsv"
-    log:
-        f"{LOGDIR}/seurat/{{sample}}/6_annotation/{{sample}}.Azimuth_annotation.log"
-    benchmark:
-        f"{LOGDIR}/seurat/{{sample}}/6_annotation/{{sample}}.Azimuth_annotation.bmk"
-    params:
-        output_dir = f"{OUTDIR}/seurat/{{sample}}",
-        random_seed = config["random_seed"],
-        ident_cond = config["parameters"]["seurat_annotation_AZIMUTH"]["ident_cond"],
-        reference = config["parameters"]["seurat_annotation_AZIMUTH"]["reference"]
-    conda: "../envs/seurat_annotation_AZIMUTH.yaml"
-    resources:
-        mem_mb=get_resource("seurat_annotation_AZIMUTH","mem_mb"),
-        walltime=get_resource("seurat_annotation_AZIMUTH","walltime")
-    threads: 
-        get_resource("seurat_annotation_AZIMUTH","threads")
-    script:
-        "../scripts/step7.2_annotation_AZIMUTH.R"
-
-rule seurat_annotation:
-    input:
-        seurat_obj=get_optional_repertoire_input
-    output:
-        seurat_obj=f"{OUTDIR}/seurat/{{sample}}/6_annotation/seurat_annotated.rds",
-        scType_ann=report(f"{OUTDIR}/seurat/{{sample}}/6_annotation/2.3_scType_annotation_non_restrict.pdf", caption="../report/conf/scType_ann.rst", category="6_Annotation")
-    log:
-        f"{LOGDIR}/seurat/{{sample}}/6_annotation/{{sample}}.annotation.log"
-    benchmark:
-        f"{LOGDIR}/seurat/{{sample}}/6_annotation/{{sample}}.annotation.bmk"
-    params:
-        output_dir = f"{OUTDIR}/seurat/{{sample}}",
-        random_seed = config["random_seed"],
-        sctype_gsPrepare = f"./scripts/scType-gene_sets_prepare.R",
-        sctype_score = f"./scripts/scType-sctype_score.R",
-        sctype_autoDetect = f"./scripts/scType-auto_detect_tissue_type.R",
-        interest_feat = config["parameters"]["seurat_annotation"]["interest_feat"],
-        gmx_dir = config["parameters"]["seurat_annotation"]["gmx_dir"],
-        ident_cond = config["parameters"]["seurat_annotation"]["ident_cond"],
-        tissue_scType = config["parameters"]["seurat_annotation"]["tissue_scType"],
-        scType_ref = config["parameters"]["seurat_annotation"]["ref_scType"],
-        restrict_REF_scType = config["parameters"]["seurat_annotation"]["restrict_REF_scType"],
-        ref_singleR = config["parameters"]["seurat_annotation"]["ref_singleR"],
-        label_singleR = config["parameters"]["seurat_annotation"]["label_singleR"],
-        case = config["case"]
-    conda: "../envs/seurat_annotation.yaml"
-    resources:
-        mem_mb=get_resource("seurat_annotation","mem_mb"),
-        walltime=get_resource("seurat_annotation","walltime")
-    threads: 
-        get_resource("seurat_annotation","threads")
-    script:
-        "../scripts/step7.1_annotation.R"
-
-
+        "../scripts/step7_degs.R"
+       
 def get_rnk_path_gspreranked(wc):
     if config["parameters"]["gs_preranked"]["rnk_path"] == True:
         samples = process_samples([u.sample for u in units.itertuples()])
-        return expand("{OUTDIR}/seurat/{sample}/5_degs/",sample=samples,OUTDIR=OUTDIR)
+        return expand("{OUTDIR}/seurat/{sample}/6_degs/",sample=samples,OUTDIR=OUTDIR)
     else:
         return config["parameters"]["gs_preranked"]["rnk_path"]
     
 rule gs_preranked:
     input: 
-        seurat_obj=get_optional_repertoire_input
+        seurat_obj=get_optional_postAnn_input
     output:
         f"{OUTDIR}/seurat/{{sample}}/7_gs/gspreranked/gspreranked_touchCheck.txt"
     log:
@@ -395,7 +400,7 @@ rule gs_preranked:
         rnk_path=get_rnk_path_gspreranked,
         ref_values=config["parameters"]["gs_preranked"]["ref_path"],
         norm_type=config["parameters"]["seurat_normalization"]["norm_type"]
-        #rnk_path=f"{OUTDIR}/seurat/{{sample}}/5_degs/",
+        #rnk_path=f"{OUTDIR}/seurat/{{sample}}/6_degs/",
     resources:
         mem_mb=get_resource("gs_preranked","mem_mb"),
         walltime=get_resource("gs_preranked","walltime")
@@ -409,7 +414,7 @@ rule gs_preranked:
 
 rule seurat_gs:
     input:
-        seurat_obj=get_optional_repertoire_input
+        seurat_obj=get_optional_postAnn_input
     output:
         seurat_obj=f"{OUTDIR}/seurat/{{sample}}/7_gs/seurat_complete.rds"
     log:
@@ -432,7 +437,7 @@ rule seurat_gs:
 
 rule slingshot:
     input:
-        seurat_obj=get_optional_repertoire_input
+        seurat_obj=get_optional_postAnn_input
     output:
         seurat_obj=f"{OUTDIR}/slingshot/{{sample}}/8_traj_in/slingshot_sce_objects.RData"
     log:
@@ -458,7 +463,7 @@ rule slingshot:
 
 rule vision:
     input:
-        seurat_obj=get_optional_repertoire_input
+        seurat_obj=get_optional_postAnn_input
     output:
         seurat_obj=f"{OUTDIR}/vision/{{sample}}/9_func_analysis/vision_object.rds"
     log:

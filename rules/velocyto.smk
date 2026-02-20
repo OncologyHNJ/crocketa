@@ -41,3 +41,22 @@ rule velocyto:
         walltime=get_resource("velocyto","walltime")
     script:
         "../scripts/step11_RNA_velocity.R"
+        
+rule cellrank:
+    input:
+        seurat_obj=f"{OUTDIR}/velocyto/{{sample}}/10_RNAvelocity/seurat_velocity.rds"
+    output: 
+        seurat_obj=f"{OUTDIR}/velocyto/{{sample}}/11_CellRank/seurat_cellrank.h5ad"
+    log:
+        f"{LOGDIR}/velocyto/{{sample}}/11_CellRank/{{sample}}.cellRank.log"
+    benchmark:
+        f"{LOGDIR}/velocyto/{{sample}}/11_CellRank/{{sample}}.cellRank.bmk"
+    params:
+        output_dir = f"{OUTDIR}/velocyto/{{sample}}",
+        random_seed = config["random_seed"]
+    conda: "../envs/cellRank.yaml"
+    resources:
+        mem_mb=get_resource("cellrank","mem_mb"),
+        walltime=get_resource("cellrank","walltime")
+    script:
+        "../scripts/step12_cellRank.py"

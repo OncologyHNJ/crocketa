@@ -12,24 +12,25 @@ rule cellranger_input:
         ref_GEX=config["ref"]["cellranger_ann"],
         ref_VDJ=config["ref"]["cellranger_vdj"],
         output_dir = f"{OUTDIR}/cellranger/{{sample}}/",
-        sample_i=f"{{sample}}"
+        sample_i=f"{{sample}}",
+        cmo_ids=config["ref"]["cmo_ids"],
+        cmo_refSet=config["ref"]["cmo_reference"]
     shell:"""
     file_count=$( find "./scripts/" -name  "cellranger-7.2.0*" -type d | wc -l )
-    # echo $( find "./scripts/" -name  "cellranger-7.2.0*" -type d )
-    # echo $file_count
     if [[ $file_count -le 0 ]]; then
     	echo "installing cellranger-7.2.0 for first time"
         wget -O ./scripts/cellranger-7.2.0.tar.gz "https://cf.10xgenomics.com/releases/cell-exp/cellranger-7.2.0.tar.gz?Expires=1738980243&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA&Signature=TiB3~mGzxSIomToV7ef5SXuT2isc6vg1BF0zSWoNMyQVut9SN9et8wm~~JZIVrJGe~shgPKwahprNrDIEpdceVITeoqrC3WsbtZUuJL~fvVOcd3-NZdTpj~ZSOBucxrCGoxtZA9kmxNka1TRIGO1wcmaAm~8x2emu7x5Jlq-loko-Ex~BX1ziyuBGMrs4E-jZYzfSulWaFCVo1DCoSoS04lrprGg0O3h6c5w5dLp5HGooJmPyuUOjZunri-gb7lZ2iHR6iJc9kHFv3b-WeN4R83IYLFt-nH1Tb0uMaJd~FiQMVkiVYb9ZtTtUO95U~0CVrCjrHBoZ~~qLxVmrrQs-w__"
         tar -xzvf scripts/cellranger-7.2.0.tar.gz --directory=scripts/
     fi
-    bash ./scripts/cellranger_writeCSV.sh {params.ref_GEX} {params.ref_VDJ} {input.samples_path} {params.units_path} {params.output_dir} {params.sample_i} &> {log}
+    bash ./scripts/cellranger_writeCSV.sh {params.ref_GEX} {params.ref_VDJ} {input.samples_path} {params.units_path} {params.output_dir} {params.sample_i} {params.cmo_ids} {params.cmo_refSet} &> {log}
     """
 
 rule cellranger:
     input:
         f"{OUTDIR}/cellranger/{{sample}}/csvRule_touchCheck.txt"
     output:
-        f"{OUTDIR}/cellranger/{{sample}}/cellranger_touchCheck.txt"
+        f"{OUTDIR}/cellranger/{{sample}}/cellranger_touchCheck.txt",
+        f"{OUTDIR}/cellranger/{{sample}}/{{sample}}_cellR/outs/config.csv" if is_cmo_run() else []
     resources:
         mem_mb=get_resource("cellranger","mem_mb"),
         walltime=get_resource("cellranger","walltime")
@@ -39,9 +40,6 @@ rule cellranger:
         f"{LOGDIR}/cellranger/{{sample}}/{{sample}}.cellranger.log"
     benchmark:
         f"{LOGDIR}/cellranger/{{sample}}/{{sample}}.cellranger.bmk"
-    resources:
-        mem_mb=get_resource("cellranger","mem_mb"),
-        walltime=get_resource("cellranger","walltime"),
     params:
         samples_path=config["samples"],
         cellranger_csv=f"{OUTDIR}/cellranger/{{sample}}/multi_vdj_{{sample}}.csv",
@@ -50,15 +48,19 @@ rule cellranger:
 	      ref_GEX=config["ref"]["cellranger_ann"],
         units_path=config["units"],
         mem_gb = lambda wildcards, threads, resources: resources.mem_mb // 1024
-    threads:
-        get_resource("cellranger","threads")
     shell:"""
+    outdir_final="{params.output_dir}{params.sample_i}_cellR"
+
+    if [[ -d "$outdir_final" ]]; then
+        echo "output dir detected, removing to create new pipeinstance"
+        rm -rf "$outdir_final"
+    fi
     file_count=$( find {params.output_dir} -name  "multi_vdj_*" -type f | wc -l )
     if [[ $file_count -gt 0 ]]; then
-        echo "run cellranger multi VDJ + GEX for {wildcards.sample}"
+        echo "run cellranger multi for {wildcards.sample}"
     	./scripts/cellranger-7.2.0/cellranger multi --id out_cellranger_{params.sample_i} --csv {params.cellranger_csv} --output-dir {params.output_dir}{params.sample_i}_cellR --disable-ui --localcores {threads} --localmem {params.mem_gb} &> {log}
     else
-        echo "run cellranger GEX"
+        echo "run cellranger count"
         bash ./scripts/cellranger_GEX.sh {params.ref_GEX} {params.samples_path} {params.units_path} {params.output_dir} {params.sample_i} {threads} {params.mem_gb} &> {log}
     fi
     touch {params.output_dir}/cellranger_touchCheck.txt
