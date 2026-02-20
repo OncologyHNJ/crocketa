@@ -507,7 +507,9 @@ To annotate cells, there are automatic tools to perform the labeling of the cell
 * 1- Perform automatic analysis employing more than one tool or reference.
 * 2- Manually curate annotation checking the expression of marker genes and signatures described in previous literature (step 9.1).
 
-In this step, automatic annotation approach is performed through *scType*, and opitionally *SingleR* and *Azimuth*.
+In this step, automatic annotation approach is performed through *scType* as the only required step, with a further classification of the non-recognised ambiguous cellular fractions through a minimal *scANVI* implementation. optionally *SingleR* and *Azimuth* can also be applied to cross-validate labels.
+
+> TIP: Only apply *singleR* if you know which dataset might be optimal for your specific analysis or cellular dataset.
 
 <img src="./.figs/.res/5-scType_ann.png" align="right" width="350"/>
 
@@ -625,7 +627,7 @@ Functional analysis through the widely-employed R software [***VISION***](https:
 	
 Trajectory Inference analysis aims to reconstruct dynamic biological processes by ordering cells along a continuous progression based on their gene expression profiles. This is particularly useful for studying cell differentiation, cell cycle progression, or other transient states.
 
-This analysis can be carrried out through [***Slingshot***](https://www.bioconductor.org/packages/release/bioc/vignettes/slingshot/inst/doc/vignette.html) and [***RNA Velocity analysis (Velocyto)***](https://github.com/velocyto-team/velocyto.R) softwares. Slingshot aims to elucidate trajectories among cells, while velocyto aims to predict most-likely future functional state of a cell.
+This analysis can be carrried out through [***Slingshot***](https://www.bioconductor.org/packages/release/bioc/vignettes/slingshot/inst/doc/vignette.html) and [***RNA Velocity analysis (Velocyto)***](https://github.com/velocyto-team/velocyto.R) softwares. Slingshot aims to elucidate trajectories among cells based on transcriptomics, while velocyto aims to predict most-likely future functional states of a cell according to RNA kinetics (splicing).
 
 #### ***Slingshot*** Analysis
 Slingshot employs *Seurat* object as input.
@@ -647,6 +649,7 @@ Results are stored at: ***{OUTDIR}/slingshotn***
 #### ***Velocity*** RNA analysis
 Velocyto employs RNA counts to predict cell states, giving a dynamic view of cell transitions.
 Again, condition/resolution of interest must specified. Optionally, *single-cell* assay may be downsampled for computational purposes and final number of cells after downsampling is specified.
+Additionally, a correction kernel is integrated through *CellRank* to improve Velocyto trajectories by also considering transcriptional states. Kernel is configured as 60%/40% for splicing/transcriptional information.
 
 #### OUTPUT
 Results are stored at: ***{OUTDIR}/velocyto/***
