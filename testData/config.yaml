@@ -12,7 +12,7 @@ input_type: "fastq"
 # "10x" or "standard" if input_type is matrix.
 technology: "10x"  
 
-# technology_version: only if using 10x technology (fastq)
+# technology_version: only if using 10x technology (fastq) - v1-3 / cmo
 technology_version: "v2"
 
 # Output and log files paths
@@ -42,6 +42,8 @@ ref:
     idx: "/path/to/crocketa/ref/index_v46_human/" # STAR aligner index path (auto generated if not already present)
     cellranger_ann: "/path/to/crocketa/ref/references_cellranger/refdata-gex-GRCh38-2024-A"
     cellranger_vdj: "/path/to/crocketa/ref/references_cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-7.1.0"
+    cmo_reference: NULL
+    cmo_ids: NULL
 
 # barcodes whitelist (10x only)
 whitelist: "/path/to/crocketa/res/whitelists/737K-august-2016.txt"  
@@ -82,6 +84,20 @@ parameters:
         resolutions: [0.1, 0.2, 0.4, 0.8] # the resolution value(s) will set the granularity of the clustering (typicaly between 0.4-1.2).
         k_neighbors: 20 # number of neighbors (k) used to generate the SNN graph
         batch_metadata: ["condition", "patient"] # Computes the Local Inverse Simpson’s Index (LISI) for all variables of interest. Specially recommended for measuring integration accuracy.
+    seurat_annotation_AZIMUTH: # Automatic annotation through Azimuth, but requires seurat5 (different environment)
+        enabled: False
+        ident_cond: 0.8
+        reference: "pbmcref" # reference to install and employ for azimuth algorithm
+    seurat_annotation: # Automatic annotation is performed through scType & SingleR
+        enabled: True
+        ident_cond: 0.2
+        interest_feat: ["TRAC", "TRBC1", "TRBC2", "PTPRC", "IL7R", "CD3D", "CD3E", "CD3G", "CD4", "CD8A", "CD8B", "CD8B2", "DNTT", "VPREB1", "VPREB3", "CD79B", "CD79A", "IGLL1", "S100A4","IGFBP6", "CD34",  "MZB1", "IGHG1", "JCHAIN", "MROH7", "SPAG4", "IGKC", "PDCD1", "ENTPD1", "MKI67", "LEPR","CYP1B1", "CLU", "LIMCH1", "MMP13", "CXCL12", "VCAN", "ACAN", "EPYC", "HAPLN1", "MFI2", "COL11A1", "COL2A1", "ENPP1", "ALPL", "CRABP2", "BGLAP", "ASPN", "SP7", "OGN", "CXCL14", "MFAP5","DLK1",  "TAGLN", "ACTA2", "PECAM1", "CDH5", "VWF", "PF4", "SELP", "GP6", "GP1BA", "GATA1", "PPBP", "ITGA2B", "FCER1A", "ITGA2", "CD9", "AHSP", "HBB", "HBA1", "HBA2", "HBG2","LYZ", "LY6G", "ITGAM", "PADI4", "LCN2", "CD24", "OLFM4","NAMPT", "NEAT","CCR6", "TRDV2","TRGV9","TRDV1"] # NULL to skip single gene exploration. "TRAC", "TRBC1", "TRBC2" (Tcell TCR); "PTPRC" (CD45, HEMATOPOIETIC); "IL7R", "CD3D", "CD3E", "CD3G" (Tcells); "CD4" (CD4 Tcells), "CD8A", "CD8B", "CD8B2" (CD8 Tcells); "DNTT", "VPREB1", "VPREB3", "CD79B", "CD79A", "IGLL1" (Bcells); "S100A4","IGFBP6" (fibro); "CD34", (HSPC); "MZB1", "IGHG1", "JCHAIN", "MROH7", "SPAG4", "IGKC" (plasma cell); "PDCD1", "ENTPD1", (PD1 / anti-PD1 expression); "MKI67", (Proliferation marker); "LEPR",(Stromal); "CYP1B1", (MPC = Mesenchymal Progenitor);  "CLU", "LIMCH1", "MMP13",(MSC subpop); "CXCL12", "VCAN", "ACAN", (CXCL12+ MPC subpop); "EPYC", "HAPLN1", "MFI2", "COL11A1", "COL2A1", (chondrocytes); "ENPP1", "ALPL", "CRABP2", "BGLAP", "ASPN", "SP7", "OGN", "CXCL14", "MFAP5","DLK1" (osteo); "TAGLN", "ACTA2", ( pericytes); "PECAM1", "CDH5", (endo ); "VWF", "PF4", "SELP", "GP6", "GP1BA", "GATA1", (megakaryocytes); "PPBP", "ITGA2B",(platelets); "FCER1A", "ITGA2", "CD9", (basophils); "AHSP", "HBB", "HBA1", "HBA2", "HBG2",(eryth );  "LYZ", "LY6G", "ITGAM", "PADI4", "LCN2", "CD24", "OLFM4", (immature neutro); "NAMPT", "NEAT" (mature neutro); "CCR6", (TH17 TCELL) "TRDV2","TRGV9","TRDV1" (gamma-delta)
+        gmx_dir: NULL # path to folder where signatures of interest are defined in gmx format files to assess gene expression
+        tissue_scType: "IR-Immune system" # scType annotation tissue: NULL if not known (inferred) or specify: Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus 
+        restrict_REF_scType: "B cells|B-like" # NULL if all celltypes, or specify cells to restrict in reference (e.g. T cells, T-like, B cells, B-like)
+        ref_scType: "ref/scTypeDB.xlsx" # scType default reference, can be edited
+        ref_singleR: NULL # ["MonacoImmuneData()", "HumanPrimaryCellAtlasData()", "NovershternHematopoieticData()"] # NULL to ignore SingleR. else choose reference paper (e.g. "ChenBrainData()") from available datasets found in scRNAseq R package (section 2, https://bioconductor.org/packages/3.17/data/experiment/vignettes/scRNAseq/inst/doc/scRNAseq.html) or cellDex references (https://bioconductor.org/packages/3.17/data/experiment/vignettes/celldex/inst/doc/userguide.html#32_Database_of_Immune_Cell_ExpressioneQTLsEpigenomics_(DICE)). More than one allowed
+        label_singleR: NULL # ["label.main", "label.main", "label.main"] # NULL if SingleR is not performed, else define variable where labels are stored in each reference dataset (depends on the paper, e.g. "SVM_clusterID" for ChenBrainData())
     seurat_scRepertoire: # [OPTIONAL] step 4b: add clonotype data if available
         enabled: True
         ident_cond: ["condition", "0.4", "seurat_clusters"] # condition of interest & (if wished) resolution to be used in this stage of the analysis
@@ -101,20 +117,6 @@ parameters:
         selected_cond: ["seurat_clusters", "condition", "0.4"] # [0.4, "condition"] # resolution or condition to be used in the downstream analysis. Resolutions can be written as follows: 0.2, 0.4... Conditions must be character vectors.
         ranking: True # gene ranking for all the genes to perform as GSEA
         test: "wilcox" # statistical test to use for the DE analysis (see Seurat's FindMarkers function options)
-    seurat_annotation_AZIMUTH: # Automatic annotation through Azimuth, but requires seurat5 (different environment)
-        enabled: False
-        ident_cond: 0.8
-        reference: "pbmcref" # reference to install and employ for azimuth algorithm
-    seurat_annotation: # Automatic annotation is performed through scType & SingleR
-        enabled: True
-        ident_cond: 0.2
-        interest_feat: ["TRAC", "TRBC1", "TRBC2", "PTPRC", "IL7R", "CD3D", "CD3E", "CD3G", "CD4", "CD8A", "CD8B", "CD8B2", "DNTT", "VPREB1", "VPREB3", "CD79B", "CD79A", "IGLL1", "S100A4","IGFBP6", "CD34",  "MZB1", "IGHG1", "JCHAIN", "MROH7", "SPAG4", "IGKC", "PDCD1", "ENTPD1", "MKI67", "LEPR","CYP1B1", "CLU", "LIMCH1", "MMP13", "CXCL12", "VCAN", "ACAN", "EPYC", "HAPLN1", "MFI2", "COL11A1", "COL2A1", "ENPP1", "ALPL", "CRABP2", "BGLAP", "ASPN", "SP7", "OGN", "CXCL14", "MFAP5","DLK1",  "TAGLN", "ACTA2", "PECAM1", "CDH5", "VWF", "PF4", "SELP", "GP6", "GP1BA", "GATA1", "PPBP", "ITGA2B", "FCER1A", "ITGA2", "CD9", "AHSP", "HBB", "HBA1", "HBA2", "HBG2","LYZ", "LY6G", "ITGAM", "PADI4", "LCN2", "CD24", "OLFM4","NAMPT", "NEAT","CCR6", "TRDV2","TRGV9","TRDV1"] # NULL to skip single gene exploration. "TRAC", "TRBC1", "TRBC2" (Tcell TCR); "PTPRC" (CD45, HEMATOPOIETIC); "IL7R", "CD3D", "CD3E", "CD3G" (Tcells); "CD4" (CD4 Tcells), "CD8A", "CD8B", "CD8B2" (CD8 Tcells); "DNTT", "VPREB1", "VPREB3", "CD79B", "CD79A", "IGLL1" (Bcells); "S100A4","IGFBP6" (fibro); "CD34", (HSPC); "MZB1", "IGHG1", "JCHAIN", "MROH7", "SPAG4", "IGKC" (plasma cell); "PDCD1", "ENTPD1", (PD1 / anti-PD1 expression); "MKI67", (Proliferation marker); "LEPR",(Stromal); "CYP1B1", (MPC = Mesenchymal Progenitor);  "CLU", "LIMCH1", "MMP13",(MSC subpop); "CXCL12", "VCAN", "ACAN", (CXCL12+ MPC subpop); "EPYC", "HAPLN1", "MFI2", "COL11A1", "COL2A1", (chondrocytes); "ENPP1", "ALPL", "CRABP2", "BGLAP", "ASPN", "SP7", "OGN", "CXCL14", "MFAP5","DLK1" (osteo); "TAGLN", "ACTA2", ( pericytes); "PECAM1", "CDH5", (endo ); "VWF", "PF4", "SELP", "GP6", "GP1BA", "GATA1", (megakaryocytes); "PPBP", "ITGA2B",(platelets); "FCER1A", "ITGA2", "CD9", (basophils); "AHSP", "HBB", "HBA1", "HBA2", "HBG2",(eryth );  "LYZ", "LY6G", "ITGAM", "PADI4", "LCN2", "CD24", "OLFM4", (immature neutro); "NAMPT", "NEAT" (mature neutro); "CCR6", (TH17 TCELL) "TRDV2","TRGV9","TRDV1" (gamma-delta)
-        gmx_dir: NULL # path to folder where signatures of interest are defined in gmx format files to assess gene expression
-        tissue_scType: "IR-Immune system" # scType annotation tissue: NULL if not known (inferred) or specify: Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus 
-        restrict_REF_scType: "B cells|B-like" # NULL if all celltypes, or specify cells to restrict in reference (e.g. T cells, T-like, B cells, B-like)
-        ref_scType: "ref/scTypeDB.xlsx" # scType default reference, can be edited
-        ref_singleR: NULL # ["MonacoImmuneData()", "HumanPrimaryCellAtlasData()", "NovershternHematopoieticData()"] # NULL to ignore SingleR. else choose reference paper (e.g. "ChenBrainData()") from available datasets found in scRNAseq R package (section 2, https://bioconductor.org/packages/3.17/data/experiment/vignettes/scRNAseq/inst/doc/scRNAseq.html) or cellDex references (https://bioconductor.org/packages/3.17/data/experiment/vignettes/celldex/inst/doc/userguide.html#32_Database_of_Immune_Cell_ExpressioneQTLsEpigenomics_(DICE)). More than one allowed
-        label_singleR: NULL # ["label.main", "label.main", "label.main"] # NULL if SingleR is not performed, else define variable where labels are stored in each reference dataset (depends on the paper, e.g. "SVM_clusterID" for ChenBrainData())
     gs_preranked: #[OPTIONAL] step 6.5: gene set scoring will calculate the average expression levels of each specified regulatory program
         enabled: True
         ref_path: "/path/to/crocketa/ref/references_msigdb/human/h.all.v2022.1.Hs.symbols.gmt"
