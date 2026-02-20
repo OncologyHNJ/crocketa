@@ -120,7 +120,7 @@ if (is_cmo){ # demultiplexing assigns specific CMO IDs to each demultiplexed cel
   
   seurat$CMO.id <- as.character(seurat$Assignment)
 	seurat$multiplex_class <- dplyr::case_when(
-		is.na(seurat$Assignment)          ~ "No_CMO_Data", # Células del 'raw' sin señal de CMO
+		is.na(seurat$Assignment)          ~ "No_CMO_Data", # 'raw' cells with no cmo data
 		seurat$Assignment == "Multiplet" ~ "Multiplet",
 		seurat$Assignment == "Blank"     ~ "Blank",
 		seurat$Assignment == "Unassigned"~ "Unassigned",
@@ -182,7 +182,6 @@ if (is_cmo){ # demultiplexing assigns specific CMO IDs to each demultiplexed cel
 		seurat$soupAssign <- as.character(seurat$soupAssign)
 
 		### compare and map cellranger w/ soup assignments:
-		# Generar una tabla cruzada
 		comparison_table <- table(
 				CellRanger_CMO = seurat$CMO.id, 
 				Soup_Assignment = seurat$soupAssign, 
@@ -202,7 +201,7 @@ if (is_cmo){ # demultiplexing assigns specific CMO IDs to each demultiplexed cel
 		)
 		
 		mapping <- apply(tab, 2, function(x) {
-		if(sum(x) == 0) return(NA) # Seguridad por si un cluster está vacío en la intersección
+		if(sum(x) == 0) return(NA)
 			rownames(tab)[which.max(x)]
 		})
 		seurat$soupAssign_Named <- NA
@@ -221,12 +220,12 @@ if (is_cmo){ # demultiplexing assigns specific CMO IDs to each demultiplexed cel
 		if(length(to_rescue) > 0) {
     	seurat$CMO.id_Rescued[to_rescue] <- seurat$soupAssign_Named[to_rescue]
 		}
-		# Guardamos la tabla de comparación final para verificar el éxito
+
 		final_comparison <- table(Original = seurat$CMO.id, Rescued = seurat$CMO.id_Rescued)
 		write.table(final_comparison, 
 				        file = paste0(dir.name, "/", folders[1], "/0.2-Final_Rescue_Summary.tsv"), row.names=TRUE, col.names = NA,
 				        sep = "\t", quote = FALSE)
-			# --- Souporcell correction: Rescued stats ---
+			# Souporcell correction: Rescued stats
 		stats_rescued <- generate_mtpx_stats(
 				seurat_obj = seurat, 
 				col_name = "CMO.id_Rescued", 
@@ -237,7 +236,7 @@ if (is_cmo){ # demultiplexing assigns specific CMO IDs to each demultiplexed cel
 	}
 	
 	
-	# --- CellRanger stats filtering ---
+	# CellRanger stats filtering ---
 	stats_original <- generate_mtpx_stats(
 		  seurat_obj = seurat, 
 		  col_name = "CMO.id", 
