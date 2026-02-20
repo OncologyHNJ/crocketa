@@ -129,7 +129,7 @@ contig_list <- lapply(csv_files, function(file) {
     read.csv(file, header = TRUE)
   }, error = function(e) {
     message(sprintf("-- Error in file '%s': %s", file, e$message))
-    return(NULL) 
+    return(NULL)
   })
 })
 names(contig_list) <- csv_files
@@ -147,7 +147,6 @@ if (!all(grepl("-1",colnames(seurat)))){
 # message(print(head(contig_list)))
 message("-- contig_list created")
 
-# split Ts/Bs
 T_contig <- contig_list[grepl("vdj_t", names(contig_list))]
 B_contig <- contig_list[grepl("vdj_b", names(contig_list))]
 # Merge with seurat object:
@@ -232,6 +231,46 @@ seurat <- combineExpression(full.combined, seurat,
                 group.by = "sample", 
                 proportion = relative, 
                 cloneTypes=c(Rare=clonetypes[1], Small=clonetypes[2], Medium=clonetypes[3], Large=clonetypes[4], Hyperexpanded=clonetypes[5]))
+                
+
+# annotate seurat cells CTs as vdj_b or vdj_b
+# Barcodes TCR
+tcr_cells <- c()
+for (i in seq_along(T_contig)) {
+    tcr_cells_i <- T_contig[[i]][["barcode"]]
+    tcr_cells_i <- paste0(samples_vdj_T[i], "_", tcr_cells_i)
+    tcr_cells <- unique(c(tcr_cells, tcr_cells_i))
+}
+
+# Barcodes BCR
+bcr_cells <- c()
+for (i in seq_along(B_contig)) {
+    bcr_cells_i <- B_contig[[i]][["barcode"]]
+    bcr_cells_i <- paste0(samples_vdj_B[i], "_", bcr_cells_i)
+    bcr_cells <- unique(c(bcr_cells, bcr_cells_i))
+}
+# merge
+vdj_table <- data.frame(
+  barcode = union(tcr_cells, bcr_cells),
+  stringsAsFactors = FALSE
+)
+vdj_table$productive_tcr <- vdj_table$barcode %in% tcr_cells
+vdj_table$productive_bcr <- vdj_table$barcode %in% bcr_cells
+
+vdj_table$vdj_type <- with(vdj_table, ifelse(
+  productive_tcr & productive_bcr, "BCR+TCR",
+  ifelse(productive_tcr, "TCR",
+         ifelse(productive_bcr, "BCR", "None"))
+))
+
+seurat@meta.data$barcode <- colnames(seurat)
+seurat$productive_tcr <- FALSE
+seurat$productive_bcr <- FALSE
+seurat$vdj_type <- "None"
+vdj_table <- vdj_table[vdj_table$barcode %in% colnames(seurat), ]
+seurat$productive_tcr[vdj_table$barcode] <- vdj_table$productive_tcr
+seurat$productive_bcr[vdj_table$barcode] <- vdj_table$productive_bcr
+seurat$vdj_type[vdj_table$barcode] <- vdj_table$vdj_type
 message("-- Seurat & Repertoire data were propperly combined.")
 for (i in cond){
   if(grepl("^0|1.[0-9]$", i)){
@@ -268,6 +307,13 @@ p0.2 <- DimPlot(seurat, group.by = "clonotype.detected", label = F, reduction='u
 quiet_ggsave(paste0(dir.name, "/", folders[5], "/0.2_IdentifiedClones_Dimplot.pdf"), plot = p0.2, scale = 1.5)
 t0.2 <- table(seurat@meta.data[["clonotype.detected"]])
 write_xlsx(as.data.frame(t0.2), paste0(dir.name, "/", folders[5], "/0.2_IdentifiedClones.xlsx"))
+p0.3 <- DimPlot(seurat, group.by = "vdj_type", label = F, reduction='umap') +
+	ggtitle("Identified clonotype - by vdj") +
+	theme(plot.title = element_text(hjust = 0.5)) +
+	scale_colour_manual(values = c(color_CTs(4)))
+quiet_ggsave(paste0(dir.name, "/", folders[5], "/0.3_IdentifiedClones_Dimplot_byVdJ.pdf"), plot = p0.3, scale = 1.5)
+t0.3 <- table(seurat@meta.data[["vdj_type"]])
+write_xlsx(as.data.frame(t0.3), paste0(dir.name, "/", folders[5], "/0.3_IdentifiedClones_byVdJ.xlsx"))
 
 ## Immunarch viral annotation (performed at the final step)
 # load DDBBs of interest: vdjDB, mc
@@ -350,7 +396,7 @@ if(! is.null(samples_vdj_T) ){
 		scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")) +
 		labs(title = "Viral annotated clones per chain", x = "TCR Chain", y = cond_i, fill = "count") +
 		theme(panel.background = element_rect(fill = "white")) +
-		geom_text(aes(label = value), color = "black", size = 3)
+		geom_text(aes(label = value), color = "black", size = 3)  # Agregar etiquetas de texto con los valores
 	quiet_ggsave(paste0(dir.name, "/", folders[5], "/7.1A_ViralAnn_VDJDB_SummPerChain.pdf"), plot = p7.1A, scale = 1.5, width = 8)
 
 	# plot also relative numbers
@@ -363,7 +409,7 @@ if(! is.null(samples_vdj_T) ){
 		scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")) +
 		labs(title = "Viral annotated clones per chain (relative to total clones per condition)", x = "TCR Chain", y = cond_i, fill = "count") +
 		theme(panel.background = element_rect(fill = "white")) +
-		geom_text(aes(label = round(rel_value, 3)), color = "black", size = 3)
+		geom_text(aes(label = round(rel_value, 3)), color = "black", size = 3)  # Agregar etiquetas de texto con los valores
 	quiet_ggsave(paste0(dir.name, "/", folders[5], "/7.1B_ViralAnn_VDJDB_SummPerChain_relative.pdf"), plot = p7.1B, scale = 1.5, width = 8)
 
 	# plot top 10 clones per chain
@@ -492,26 +538,45 @@ for (x.cond in cond){
     
     cellular_options <- "no_selection"
     if (length(T_contig) > 0 ){
-    	cellular_options <- c(cellular_options, "T_cells")
+    	cellular_options <- c(cellular_options, "TCR")
     }
-    if (length(B_contig) > 0 ){
-    	cellular_options <- c(cellular_options, "B_cells")
+    if (all(length(B_contig) > 0, set ==  "Full_assay")){
+    	cellular_options <- c(cellular_options, "BCR")
     }
     for (cell_select in cellular_options){
     	message(paste0("- Analyzing for specified cells: ", cell_select))
       dir.create(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select))
     	dir.create(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond))
+    	Idents(seurat_i) <- x.cond
     	if (cell_select == "no_selection"){
     		seurat_sel <- seurat_i
     	 	}
-    	if (cell_select == "T_cells"){
-     		cell_subset <- which(grepl("T cells|T-like", seurat_i@meta.data$scANVI_annotation))
-    	  seurat_sel <- seurat_i[, cell_subset]
+    	if (cell_select == "TCR"){
+     		cell_subset_tcr <- which(seurat_i@meta.data$vdj_type == "TCR")
+    	  seurat_sel <- seurat_i[, cell_subset_tcr]
+    	  col <- length(clonetypes)
+				pann <- occupiedscRepertoire(seurat_sel, x.axis = "scANVI_annotation") +
+				    scale_fill_manual(values = c(color_CTs(col))) +
+				    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+				quiet_ggsave(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/0.occupiedscRepertoire_TCRs_full.pdf"), plot = pann, scale = 1.5)
+				tann <- occupiedscRepertoire(seurat_sel, x.axis = "scANVI_annotation", exportTable = T)
+				write_xlsx(tann, paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/0.occupiedscRepertoire_TCRs_full.xlsx"))
+				cell_subset <- which(grepl("T cells|T like", seurat_sel@meta.data$scANVI_annotation))
+    	  seurat_sel <- seurat_sel[, cell_subset]
     	  }
-    	if (cell_select == "B_cells"){
-     		cell_subset <- which(grepl("B cells", seurat_i@meta.data$scANVI_annotation))
-    	  seurat_sel <- seurat_i[, cell_subset]
-    	  }
+    	if (cell_select == "BCR"){
+     		cell_subset_bcr <- which(seurat_i@meta.data$vdj_type == "BCR")
+    	  seurat_sel <- seurat_i[, cell_subset_bcr]
+    	  col <- length(clonetypes)
+				pann <- occupiedscRepertoire(seurat_sel, x.axis = "scANVI_annotation") +
+				    scale_fill_manual(values = c(color_CTs(col))) +
+				    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+				quiet_ggsave(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/0.occupiedscRepertoire_BCRs_full.pdf"), plot = pann, scale = 1.5)
+				tann <- occupiedscRepertoire(seurat_sel, x.axis ="scANVI_annotation", exportTable = T)
+				write_xlsx(tann, paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/0.occupiedscRepertoire_BCRs_full.xlsx"))
+			  cell_subset <- which(grepl("B cells", seurat_sel@meta.data$scANVI_annotation))
+			  seurat_sel <- seurat_sel[, cell_subset]
+			}
 		  Idents(seurat_sel) <- x.cond
 		  ## 1- Dimplot by assay, but with the colors we'll use per each x.cond level
 		  p1 <- DimPlot(seurat_sel, group.by = x.cond) + 
@@ -523,7 +588,7 @@ for (x.cond in cond){
 				ggtitle("Identified Clonotype") +
 				scale_color_manual(values = color_conds(length(unique(seurat_sel@meta.data[[x.cond]])))) +
 				theme(plot.title = element_text(hjust = 0.5))
-			    quiet_ggsave(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond, "/1.2_IdentifiedClones_Dimplot_by_", x.cond, ".pdf"), plot = p1.2, scale = 1.5, width = 8)
+			quiet_ggsave(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond, "/1.2_IdentifiedClones_Dimplot_by_", x.cond, ".pdf"), plot = p1.2, scale = 1.5, width = 8)
 
 			t1.2 <- table(seurat_sel@meta.data[["clonotype.detected"]], seurat_sel@meta.data[[x.cond]])
 			write_xlsx(as.data.frame(t1.2), paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond, "/1.2_IdentifiedClones_Dimplot_by_", x.cond, ".xlsx"))
@@ -621,11 +686,13 @@ for (x.cond in cond){
 		  }
 		  col <- length(clonetypes)
 		  p3.1 <- occupiedscRepertoire(seurat_sel, x.axis = x.cond) +
-		      scale_fill_manual(values = c(color_CTs(col))) 
-		  quiet_ggsave(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond, "/3.1A_occupiedscRepertoire_", x.cond, ".pdf"), plot = p3.1, scale = 1.5, width = 8)
+		      scale_fill_manual(values = c(color_CTs(col))) +
+		      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+		  quiet_ggsave(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond, "/3.1A_occupiedscRepertoire_", x.cond, ".pdf"), plot = p3.1, scale = 1.5)
 		  p3.2 <- occupiedscRepertoire(seurat_sel, x.axis = x.cond, proportion = TRUE) +
-		      scale_fill_manual(values = c(color_CTs(col)))
-		  quiet_ggsave(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond, "/3.1B_occupiedscRepertoire_", x.cond, "_relative.pdf"), plot = p3.2, scale = 1.5, width = 8)
+		      scale_fill_manual(values = c(color_CTs(col))) +
+		      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+		  quiet_ggsave(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond, "/3.1B_occupiedscRepertoire_", x.cond, "_relative.pdf"), plot = p3.2, scale = 1.5)
 		  t3.1 <- occupiedscRepertoire(seurat_sel, x.axis = x.cond, exportTable = T)
 		  write_xlsx(t3.1, paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond, "/3.1A_occupiedscRepertoire_", x.cond, ".xlsx"))
 		  ## run the same plot but with unique absolute values per condition instead of number of cells as obtained above (final_df)
@@ -633,12 +700,12 @@ for (x.cond in cond){
 		  p3.3 <- ggplot(final_df, aes(x = final_df[,x.cond], y = Freq, fill = cloneType, label = unique_CTaa_perCloneType)) + 
 		      geom_bar(stat = "identity") + 
 		      geom_text(size = 3, position = position_stack(vjust = 0.5)) +
-		      theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+		      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +		      
 		      scale_fill_manual(values = c(color_CTs(col))) + 
 		          ylab("Single Cells") + 
 		          theme_classic() + 
 		          theme(axis.title.x = element_blank())
-		  quiet_ggsave(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond, "/3.1C_occupiedscRepertoire_", x.cond, "_Unique.pdf"), plot = p3.3, scale = 1.5, width = 8)
+		  quiet_ggsave(paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond, "/3.1C_occupiedscRepertoire_", x.cond, "_Unique.pdf"), plot = p3.3, scale = 1.5)
 		  ## additional clonal plots
 		  combined2 <- expression2List(seurat_sel, 
 		                            split.by = x.cond)
@@ -1066,6 +1133,7 @@ for (x.cond in cond){
   }
 }
 message("3- ANALYSIS FINISHED")
+
 if (!is.null(samples_vdj_T)){
 	saveRDS(seurat_noViral, file = paste0(dir.name, "/",folders[5], "/seurat_scRepertoire-noViral.rds"))
 }
