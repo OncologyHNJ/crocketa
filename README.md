@@ -42,6 +42,7 @@ with additional steps for detailed assay characterization. *crocketa* has the go
 * Pipeline can be executed exclusively for *scRNAseq* data from multiple sequencing technologies.
 * [scRepertoire R Package](https://github.com/BorchLab/scRepertoire) if enabled allows integration of *scTCR/BCRseq* data as an intermediate module of the workflow in order to integrate clonotype information in downstream transcriptional analysis -such as DEAs, GSEAs or trajectory inference analysis- while accounting for immune repertoire analysis.
 * Integration with vdj data is currently limited to ***10x* sequencing technology**
+* UPDATE: *CMO* multiplexed data can now be analysed. Limited to ***10x* sequencing technology**
 
 This pipeline uses state-of-the-art single-cell RNA-seq tools like [Seurat](https://satijalab.org/seurat/), [STARsolo](https://github.com/alexdobin/STAR/blob/master/docs/STARsolo.md), [Vision](https://github.com/yoseflab/VISION), [Slingshot](https://github.com/kstreet13/slingshot), [Velocyto](http://velocyto.org/), [Azimuth](https://azimuth.hubmapconsortium.org/), [SingleR](https://github.com/dviraran/SingleR), [DoubletFinder](https://github.com/chris-mcginnis-ucsf/DoubletFinder), [scRepertoire](https://github.com/BorchLab/scRepertoire) and [Immunarch](https://github.com/immunomind/immunarch).
 
