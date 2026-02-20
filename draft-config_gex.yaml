@@ -12,7 +12,7 @@ input_type: "fastq"
 # "10x" or "standard" if input_type is matrix.
 technology: "10x"  
 
-# technology_version: only if using 10x technology (fastq)
+# technology_version: only if using 10x technology (fastq) - v1-3 / cmo
 technology_version: "v3"
 
 # Output and log files paths
@@ -45,6 +45,7 @@ ref:
     cellranger_vdj: NULL
     cmo_reference: NULL
     cmo_ids: NULL
+    
 # barcodes whitelist (10x only)
 whitelist: "/path/to/res/whitelists/3M-february-2018.txt" # Must be uncompressed prior to run
 
