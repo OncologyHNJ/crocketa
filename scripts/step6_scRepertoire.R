@@ -129,7 +129,7 @@ contig_list <- lapply(csv_files, function(file) {
     read.csv(file, header = TRUE)
   }, error = function(e) {
     message(sprintf("-- Error in file '%s': %s", file, e$message))
-    return(NULL)  # Devuelve NULL en caso de error
+    return(NULL) 
   })
 })
 names(contig_list) <- csv_files
@@ -350,7 +350,7 @@ if(! is.null(samples_vdj_T) ){
 		scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")) +
 		labs(title = "Viral annotated clones per chain", x = "TCR Chain", y = cond_i, fill = "count") +
 		theme(panel.background = element_rect(fill = "white")) +
-		geom_text(aes(label = value), color = "black", size = 3)  # Agregar etiquetas de texto con los valores
+		geom_text(aes(label = value), color = "black", size = 3)
 	quiet_ggsave(paste0(dir.name, "/", folders[5], "/7.1A_ViralAnn_VDJDB_SummPerChain.pdf"), plot = p7.1A, scale = 1.5, width = 8)
 
 	# plot also relative numbers
@@ -363,7 +363,7 @@ if(! is.null(samples_vdj_T) ){
 		scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 5, name = "PuRd")) +
 		labs(title = "Viral annotated clones per chain (relative to total clones per condition)", x = "TCR Chain", y = cond_i, fill = "count") +
 		theme(panel.background = element_rect(fill = "white")) +
-		geom_text(aes(label = round(rel_value, 3)), color = "black", size = 3)  # Agregar etiquetas de texto con los valores
+		geom_text(aes(label = round(rel_value, 3)), color = "black", size = 3)
 	quiet_ggsave(paste0(dir.name, "/", folders[5], "/7.1B_ViralAnn_VDJDB_SummPerChain_relative.pdf"), plot = p7.1B, scale = 1.5, width = 8)
 
 	# plot top 10 clones per chain
@@ -528,37 +528,6 @@ for (x.cond in cond){
 			t1.2 <- table(seurat_sel@meta.data[["clonotype.detected"]], seurat_sel@meta.data[[x.cond]])
 			write_xlsx(as.data.frame(t1.2), paste0(dir.name, "/", folders[5], "/", set, "/", cell_select, "/", x.cond, "/1.2_IdentifiedClones_Dimplot_by_", x.cond, ".xlsx"))
 
-		  ' 
-		  # 2,3 plots from scRepertoire package are not relevant
-		  ## 2 - clonalOverlay
-		  p2 <- clonalOverlay(seurat_sel, 
-		                reduction = "umap", 
-		                freq.cutpoint = 30, 
-		                bins = 10, 
-		                facet = "ident") + 
-		                  guides(color = "none")
-		  quiet_ggsave(paste0(dir.name, "/", folders[5], "/", x.cond, "/2_ClonalOverlay.pdf"), plot = p2, scale = 1.5)
-		  # add params for freq.cutpoint & bins (& patient/condition facet?)
-
-		  ## 3 - ClonalNetwork
-		  #No Identity filter
-		  p3 <- clonalNetwork(seurat_sel, 
-		                reduction = "umap", 
-		                identity = "ident",
-		                filter.clones = NULL,
-		                filter.identity = NULL,
-		                cloneCall = "aa")
-		  quiet_ggsave(paste0(dir.name, "/", folders[5], "/", x.cond, "/3_ClonalNetwork.pdf"), plot = p3, scale = 1.5)
-		  # and export table
-		  t3 <- clonalNetwork(seurat_sel, 
-		                    reduction = "umap", 
-		                    identity = "ident",
-		                    filter.clones = NULL,
-		                    filter.identity = NULL,
-		                    cloneCall = "aa", exportTable = T)
-		  write_xlsx(t3, paste0(dir.name, "/", folders[5], "/", x.cond, "/3_ClonalNetwork.xlsx"))
-		  # or select a specific class in filter.identity to only plot network involving this group
-		  '
 		  # Clones identified by subgroups
 		  final_df <- NULL
 		  seurat_sel@meta.data[[x.cond]] <- as.factor(seurat_sel@meta.data[[x.cond]])
@@ -1097,11 +1066,6 @@ for (x.cond in cond){
   }
 }
 message("3- ANALYSIS FINISHED")
-'
-# 7.8. Save Seurat objects in AnnData
-SaveH5Seurat(seurat, filename = paste0(dir.name, "/", folders[3], "/seurat_scRepertoire.h5Seurat"))
-Convert(paste0(dir.name, "/",folders[3], "/seurat_scRepertoire.h5Seurat"), dest = "h5ad")
-' # no compatibility for seurat v4.3 & seuratdisk
 if (!is.null(samples_vdj_T)){
 	saveRDS(seurat_noViral, file = paste0(dir.name, "/",folders[5], "/seurat_scRepertoire-noViral.rds"))
 }
