@@ -117,7 +117,6 @@ genes = list(r('rownames(seu)'))
 # Import metadata
 with localconverter(robjects.default_converter + pandas2ri.converter):
   meta_data = r('seu@meta.data')
-  # Asegurar conversión a pandas
   if not isinstance(meta_data, pd.DataFrame):
     meta_data = pandas2ri.rpy2py(meta_data)
 
@@ -221,7 +220,7 @@ adata.obsm["X_umap_scanvi"] = adata.obsm["X_umap"].copy()
 
 sc.pl.embedding(adata, basis="X_umap_seurat", color=SCANVI_PREDICTIONS_KEY, title="Estructura Seurat")
 save_graph("scANVI_predictions-seurat_umap.pdf")
-# Ver las predicciones sobre la estructura aprendida por scANVI
+
 sc.pl.embedding(adata, basis="X_umap_scanvi", color=SCANVI_PREDICTIONS_KEY, title="Estructura scANVI")
 save_graph("scANVI_predictions-scANVI_umap.pdf")
 
