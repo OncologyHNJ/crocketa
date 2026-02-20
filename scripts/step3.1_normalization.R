@@ -17,7 +17,7 @@ message("1. Libraries were loaded.")
 # 2. Folder configuration. 
 dir.name = snakemake@params[["output_dir"]]
 input_data = snakemake@input[["seurat_obj"]]
-folders = c("1_preprocessing", "2_normalization", "3_clustering", "4_scRepertoire", "5_degs", "6_annotation", "7_gs", "8_traj_in", "9_func_analysis", "10_RNAvelocity")
+folders = c("1_preprocessing", "2_normalization", "3_clustering", "4_annotation", "5_scRepertoire", "6_degs", "7_gs", "8_traj_in", "9_func_analysis", "10_RNAvelocity")
 message("2. Folder paths were set.")
 
 # 3. Get variables from Snakemake.  
@@ -79,6 +79,11 @@ print(length(colnames(seurat)))
 PCs <- 50
 # print(system("free -h"))
 seurat$orig.ident <- as.factor(seurat$orig.ident)
+if(length(colnames(seurat) < 800)){
+  score_ctrl=10
+} else{
+  score_ctrl=24
+}
 # Regress merge variable input.
 if (regress_merge_effect){
   merge_var = "orig.ident"
@@ -95,7 +100,6 @@ if (length(colnames(seurat)) > 150000){
 # 5.1. Normalize data depending of the method.
 if (normalization == "standard") {
   seurat <- NormalizeData(seurat, normalization.method = "LogNormalize", scale.factor = 10000)
-
   if (is.numeric(vf)) {
     message(paste0("using ", vf, " top variable genes"))
     seurat <- FindVariableFeatures(seurat, selection.method = "vst", nfeatures = vf)
@@ -137,7 +141,7 @@ if (normalization == "standard") {
   seurat <- RunPCA(seurat, features = scaling_feats, npcs = PCs, npcs.print = 1) 
 
   # Cell cycle scores and plots.
-  seurat <- CellCycleScoring(object = seurat, s.features = s.genes, g2m.features = g2m.genes, set.ident = T)
+  seurat <- CellCycleScoring(object = seurat, s.features = s.genes, g2m.features = g2m.genes, set.ident = T, nbin = score_ctrl)
   p4 <- FeaturePlot(object = seurat, features ="S.Score") + ggtitle("S phase score")
   ggsave(paste0(dir.name, "/", folders[2], "/4_sscore_featureplot.pdf"), plot = p4, scale = 1.5)
   p5 <- FeaturePlot(object = seurat, features ="G2M.Score") + ggtitle("G2/M phase score")
@@ -185,7 +189,7 @@ if (normalization == "standard") {
   seurat <- RunPCA(seurat, features = scaling_feats, npcs = PCs) # This result could all be saved in a table.
   
   # Cell cycle scores and plots.
-  seurat <- CellCycleScoring(object = seurat, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+  seurat <- CellCycleScoring(object = seurat, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE, nbin = score_ctrl)
   p4 <- FeaturePlot(object = seurat, features ="S.Score") + ggtitle("S phase score")
   ggsave(paste0(dir.name, "/", folders[2], "/4_sscore_featureplot.pdf"), plot = p4, scale = 1.5)
   p5 <- FeaturePlot(object = seurat, features ="G2M.Score") + ggtitle("G2/M phase score")
@@ -273,7 +277,5 @@ if(write_table){
 
 
 # 5.5. Save RDS: we can use this object to generate all the rest of the data.
-print("Number of total cells: ")
-print(length(colnames(seurat)))
 saveRDS(seurat, file = paste0(dir.name, "/",folders[2], "/seurat_normalized-pcs.rds"))
 message("7. Seurat object was saved.")

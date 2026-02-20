@@ -18,7 +18,7 @@ message("1. Libraries were loaded.")
 # 2. Folder configuration. 
 dir.name = snakemake@params[["output_dir"]]
 input_data = snakemake@input[["seurat_obj"]]
-folders = c("1_preprocessing", "2_normalization", "3_clustering", "4_scRepertoire", "5_degs", "6_annotation", "7_gs", "8_traj_in", "9_func_analysis", "10_RNAvelocity")
+folders = c("1_preprocessing", "2_normalization", "3_clustering", "4_annotation", "5_scRepertoire", "6_degs", "7_gs", "8_traj_in", "9_func_analysis", "10_RNAvelocity")
 message("2. Folder paths were set.")
 
 # B. Parameters: analysis configuration 
@@ -47,12 +47,17 @@ seurat = readRDS(input_data)
 assay_type <- seurat@active.assay
 dir.create(paste0(dir.name, "/", folders[7]), showWarnings = FALSE)
 message("1. Seurat object was loaded.")
+if(length(colnames(seurat) < 800)){
+  score_ctrl=10
+} else{
+  score_ctrl=24
+}
 
 # 9. GS scoring
 # 9.1 Geneset loading, filtering and scoring.
 genesets <- read.gmt(geneset_collection) #should be a tab file, each row = pathway.
 genesets <- genesets[unlist(lapply(genesets, function(x) ((length(which(x%in% rownames(seurat)))/ length(x))> geneset_percentage)))]
-seurat <- AddModuleScore(object = seurat, features= genesets, name = names(genesets))
+seurat <- AddModuleScore(object = seurat, features= genesets, name = names(genesets), nbin = score_ctrl, ctrl = floor(min(sapply(genesets, length))) * 0.3)
 message("2. Signatures were loaded and scores were calculated.")
 
 # 9.2 We create a vector containing the different combinations for each resolutions and each cluster.  

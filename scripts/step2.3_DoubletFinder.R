@@ -16,6 +16,7 @@ suppressMessages(library("bitops"))
 suppressMessages(library("spam"))
 suppressMessages(library("fields"))
 require("devtools")
+options(timeout = 240) # 60 seconds by default, may not be enough
 if (!require("DoubletFinder", character.only = TRUE)){
     print("Externally installing...")
     devtools::install_github("maxmeieran/DoubletFinder") # corrected fork version from original remotes::install_github('chris-mcginnis-ucsf/DoubletFinder'), errors in seuratV3
@@ -31,7 +32,7 @@ if (is.null(input_file)) {
   quit(status = 0)
 }
 dir.name = snakemake@params[["output_dir"]]
-folders = c("1_preprocessing", "2_normalization", "3_clustering", "4_scRepertoire", "5_degs", "6_annotation", "7_gs", "8_traj_in", "9_func_analysis", "10_RNAvelocity")
+folders = c("1_preprocessing", "2_normalization", "3_clustering", "4_annotation", "5_scRepertoire", "6_degs", "7_gs", "8_traj_in", "9_func_analysis", "10_RNAvelocity")
 message("2. Folder paths were set.")
 
 

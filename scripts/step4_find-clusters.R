@@ -6,7 +6,7 @@ message("CONFIGURATION STEP")
 # A. Parameters: 
 # 1. Load libraries. 
 suppressMessages(library("Seurat"))
-suppressMessages(library("SeuratDisk"))
+# suppressMessages(library("SeuratDisk"))
 suppressMessages(library("dplyr"))
 suppressMessages(library("data.table"))
 suppressMessages(library("reticulate"))
@@ -22,7 +22,7 @@ message("1. Libraries were loaded.")
 # 2. Folder configuration. 
 input_file = snakemake@input[["seurat_obj"]]
 dir.name = snakemake@params[["output_dir"]]
-folders = c("1_preprocessing", "2_normalization", "3_clustering", "4_scRepertoire", "5_degs", "6_annotation", "7_gs", "8_traj_in", "9_func_analysis", "10_RNAvelocity")
+folders = c("1_preprocessing", "2_normalization", "3_clustering", "4_annotation", "5_scRepertoire", "6_degs", "7_gs", "8_traj_in", "9_func_analysis", "10_RNAvelocity")
 message("2. Folder paths were set.")
 
 # 3. Get variables from Snakemake.  
@@ -176,8 +176,8 @@ for(j in 1:length(resolutions)){
 message("6. Statistics table was done and saved.")
 
 # 7.8. Save Seurat object in AnnData
-SaveH5Seurat(seurat, filename = paste0(dir.name, "/", folders[3], "/seurat_find-clusters.h5Seurat"))
-Convert(paste0(dir.name, "/",folders[3], "/seurat_find-clusters.h5Seurat"), dest = "h5ad")
+# SaveH5Seurat(seurat, filename = paste0(dir.name, "/", folders[3], "/seurat_find-clusters.h5Seurat"))
+# Convert(paste0(dir.name, "/",folders[3], "/seurat_find-clusters.h5Seurat"), dest = "h5ad")
 
 # 7.9. Save RDS: we can use this object to generate all the rest of the data.
 # save UMAP
