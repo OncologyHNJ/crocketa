@@ -19,9 +19,9 @@ require("devtools")
 options(timeout = 240) # 60 seconds by default, may not be enough
 if (!require("DoubletFinder", character.only = TRUE)){
     print("Externally installing...")
-    devtools::install_github("maxmeieran/DoubletFinder") # corrected fork version from original remotes::install_github('chris-mcginnis-ucsf/DoubletFinder'), errors in seuratV3
+    devtools::install_github("maxmeieran/DoubletFinder")
 }
-suppressMessages(library("DoubletFinder")) # paramSweep_v3()
+suppressMessages(library("DoubletFinder")) 
 
 message("1. Libraries were loaded.")
 
