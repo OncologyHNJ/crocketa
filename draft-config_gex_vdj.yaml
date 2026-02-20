@@ -85,6 +85,20 @@ parameters:
         resolutions: [0.1, 0.2, 0.4, 0.8, 1.2] # the resolution value(s) will set the granularity of the clustering (typicaly between 0.4-1.2).
         k_neighbors: 20 # number of neighbors (k) used to generate the SNN graph
         batch_metadata: "condition" # specify your metadata column (condition). Computes the Local Inverse Simpson’s Index (LISI) for all variables of interest. Specially recommended for measuring integration accuracy.
+    seurat_annotation_AZIMUTH: # Automatic annotation through Azimuth, but requires seurat5 (different environment)
+        enabled: False
+        ident_cond: 0.8
+        reference: "pbmcref" # reference to install and employ for azimuth algorithm
+    seurat_annotation: # Automatic annotation is performed through scType & SingleR
+        enabled: True
+        ident_cond: 0.8
+        interest_feat: ["TRAC", "TRBC1", "TRBC2", "PTPRC", "IL7R", "CD3D", "CD3E", "CD3G", "CD4", "CD8A", "CD8B", "CD8B2", "DNTT", "VPREB1", "VPREB3", "CD79B", "CD79A", "PDCD1", "ENTPD1", "MKI67"] # NULL to skip single gene exploration. "TRAC", "TRBC1", "TRBC2" (specific for 5'TCR, expression of receptor); "PTPRC" (CD45, HEMATOPOIETIC); "IL7R", "CD3D", "CD3E", "CD3G" (Tcells); "CD4" (CD4 Tcells), "CD8A", "CD8B", "CD8B2" (CD8 Tcells); "DNTT", "VPREB1", "VPREB3", "CD79B", "CD79A", (Bcells); "PDCD1", "ENTPD1", (PD1 / anti-PD1 expression); "MKI67", (Proliferation marker)
+        gmx_dir: NULL #"/home/user/gonzalo/" # path to folder where signatures of interest are defined in gmx format files to assess gene expression
+        tissue_scType: "IR-Immune system" # scType annotation tissue: NULL if not known (inferred) or specify: Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus or IR-Immune system: better markers for 5' sequencing
+        restrict_REF_scType: NULL # "T cells|T-like" # NULL if all celltypes, or specify cells to restrict in reference (e.g. T cells, T-like, B cells, B-like)
+        ref_scType: "ref/scTypeDB.xlsx" # scType default reference, can be edited
+        ref_singleR: NULL # ["MonacoImmuneData()", "HumanPrimaryCellAtlasData()"] # NULL to ignore SingleR. else choose reference paper (e.g. "ChenBrainData()") from available datasets found in scRNAseq R package (section 2, https://bioconductor.org/packages/3.17/data/experiment/vignettes/scRNAseq/inst/doc/scRNAseq.html) or cellDex references (https://bioconductor.org/packages/3.17/data/experiment/vignettes/celldex/inst/doc/userguide.html#32_Database_of_Immune_Cell_ExpressioneQTLsEpigenomics_(DICE)). More than one allowed
+        label_singleR: NULL # ["label.main", "label.main"] # NULL if SingleR is not performed, else define variable where labels are stored in each reference dataset (depends on the paper, e.g. "SVM_clusterID" for ChenBrainData())
     seurat_scRepertoire: # [OPTIONAL] step 4b: add clonotype data if available
         enabled: True
         ident_cond: ["condition","0.8"] # specify your metadata column (condition) of interest & (if wished) resolution to be used in this stage of the analysis
@@ -102,20 +116,6 @@ parameters:
         selected_cond: ["seurat_clusters", "condition", "0.8"] # [0.4, "condition"] # resolution or condition to be used in the downstream analysis. Resolutions can be written as follows: 0.2, 0.4... Conditions must be character vectors.
         ranking: True # gene ranking for all the genes to perform as GSEA
         test: "wilcox" # statistical test to use for the DE analysis (see Seurat's FindMarkers function options)
-    seurat_annotation_AZIMUTH: # Automatic annotation through Azimuth, but requires seurat5 (different environment)
-        enabled: False
-        ident_cond: 0.8
-        reference: "pbmcref" # reference to install and employ for azimuth algorithm
-    seurat_annotation: # Automatic annotation is performed through scType & SingleR
-        enabled: True
-        ident_cond: 0.8
-        interest_feat: ["TRAC", "TRBC1", "TRBC2", "PTPRC", "IL7R", "CD3D", "CD3E", "CD3G", "CD4", "CD8A", "CD8B", "CD8B2", "DNTT", "VPREB1", "VPREB3", "CD79B", "CD79A", "PDCD1", "ENTPD1", "MKI67"] # NULL to skip single gene exploration. "TRAC", "TRBC1", "TRBC2" (specific for 5'TCR, expression of receptor); "PTPRC" (CD45, HEMATOPOIETIC); "IL7R", "CD3D", "CD3E", "CD3G" (Tcells); "CD4" (CD4 Tcells), "CD8A", "CD8B", "CD8B2" (CD8 Tcells); "DNTT", "VPREB1", "VPREB3", "CD79B", "CD79A", (Bcells); "PDCD1", "ENTPD1", (PD1 / anti-PD1 expression); "MKI67", (Proliferation marker)
-        gmx_dir: NULL #"/home/user/gonzalo/" # path to folder where signatures of interest are defined in gmx format files to assess gene expression
-        tissue_scType: "IR-Immune system" # scType annotation tissue: NULL if not known (inferred) or specify: Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus or IR-Immune system: better markers for 5' sequencing
-        restrict_REF_scType: NULL # "T cells|T-like" # NULL if all celltypes, or specify cells to restrict in reference (e.g. T cells, T-like, B cells, B-like)
-        ref_scType: "ref/scTypeDB.xlsx" # scType default reference, can be edited
-        ref_singleR: NULL # ["MonacoImmuneData()", "HumanPrimaryCellAtlasData()"] # NULL to ignore SingleR. else choose reference paper (e.g. "ChenBrainData()") from available datasets found in scRNAseq R package (section 2, https://bioconductor.org/packages/3.17/data/experiment/vignettes/scRNAseq/inst/doc/scRNAseq.html) or cellDex references (https://bioconductor.org/packages/3.17/data/experiment/vignettes/celldex/inst/doc/userguide.html#32_Database_of_Immune_Cell_ExpressioneQTLsEpigenomics_(DICE)). More than one allowed
-        label_singleR: NULL # ["label.main", "label.main"] # NULL if SingleR is not performed, else define variable where labels are stored in each reference dataset (depends on the paper, e.g. "SVM_clusterID" for ChenBrainData())
     gs_preranked: #[OPTIONAL] step 6.5: gene set scoring will calculate the average expression levels of each specified regulatory program
         enabled: True
         ref_path: "/path/to/crocketa/ref/references_msigdb/human/h.all.v2022.1.Hs.symbols.gmt"
