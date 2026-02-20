@@ -1,7 +1,5 @@
 #!/bin/bash
 
-## command line: bash cellranger_writeCSV.sh -gex "/Users/gsoria/Desktop/bolledit_v2/ref/gex" -vdj "/Users/gsoria/Desktop/bolledit_v2/ref/VDJ" -units "/Users/gsoria/Desktop/bolledit_v2/cellranger_draft/edited_units_forCellRnger.tsv" -o "/Users/gsoria/Desktop/bolledit_v2/cellranger_draft/" -i "s3_GeneX_C"
-
 # read arguments from command line
 ref_GEX="$1"
 samples_path="$2"
