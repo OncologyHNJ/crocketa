@@ -43,7 +43,8 @@ ref:
     idx: "/path/to/ref/add_your_ref_index/" # STAR aligner index path (auto generated if not already present)
     cellranger_ann: NULL
     cellranger_vdj: NULL
-
+    cmo_reference: NULL
+    cmo_ids: NULL
 # barcodes whitelist (10x only)
 whitelist: "/path/to/res/whitelists/3M-february-2018.txt" # Must be uncompressed prior to run
 
