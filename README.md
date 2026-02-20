@@ -707,8 +707,7 @@ technology: "10x"
 
 # technology_version: only if using 10x technology (fastq) - v1-3 / cmo
 technology_version: "v2"
-[...
-]
+[...]
       10x:
             v1:
                 "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 10  --soloCBlen 14 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM"
