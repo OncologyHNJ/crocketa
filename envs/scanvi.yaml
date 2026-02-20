@@ -1,0 +1,21 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  - python=3.10
+  - r-base=4.3
+  - r-seurat=4.3.0
+  - scanpy
+  - numpy
+  - anndata
+  - scvi-tools
+  - scrublet
+  - seaborn
+  - pandas
+  - scipy
+  - rpy2
+  - pip
+  - pip:
+    - anndata2ri

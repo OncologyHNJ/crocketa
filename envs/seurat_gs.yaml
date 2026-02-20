@@ -5,7 +5,7 @@ channels:
 dependencies:
     - libgfortran
     - r-base=4.3
-    - r-seurat
+    - r-seurat=4.3.0
     - r-reticulate
     - r-ggplot2
     - r-clustree

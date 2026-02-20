@@ -4,7 +4,7 @@ channels:
 
 dependencies:
     - r-base=4.3
-    - r-seurat
+    - r-seurat=4.3.0
     - bioconductor-slingshot
     - bioconductor-delayedmatrixstats
     - r-rgl
