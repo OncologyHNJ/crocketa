@@ -78,11 +78,12 @@ The use of Snakemake alongside [conda](https://docs.conda.io/en/latest/) package
 5. [Resource optimization](#Resource-optimization)
 6. [HTML Reports](#HTML-Reports)
 7. [Scanpy interoperability](#Scanpy-interoperability)
-8. [Known Issues](#Known-Issues)
-9. [Implementation Details](#Implementation-Details)
-10. [Test Data](#testData-Input)
-11. [Environment specifications](#Environment-specifications)
-12. [CITATION](#CITATION)
+8. [Sequencing technology options](#Sequencing-technology-options)
+9. [Known Issues](#Known-Issues)
+10. [Implementation Details](#Implementation-Details)
+11. [Test Data](#testData-Input)
+12. [Environment specifications](#Environment-specifications)
+13. [CITATION](#CITATION)
 
 ## 1. Pipeline configuration	
 *crocketa* is based on the previously published [Bollito workflow](https://github.com/cnio-bu/bollito) and follows a similar tool configuration and structure.  
@@ -261,8 +262,8 @@ Some other flags are recommended:
    <li><b>Stage 3: </b> STAR - Sequence Alignment</li>
    <li><b>Stage 4: </b> Cell-level Quality Control and data preprocessing (normalization, scaling, dimensionality reduction, ...)</li>
    <li><b>Stage 5: </b> Cell Clustering</li>
-   <li><b>Stage 6: </b> Repertoire analysis</li>
-   <li><b>Stage 7: </b> Cell annotation</li>
+   <li><b>Stage 6: </b> Cell annotation</li>
+   <li><b>Stage 7: </b> Repertoire analysis</li>
    <li><b>Stage 8: </b> Marker extraction / Differential expression step</li>
    <li><b>Stage 9: </b> Functional Analysis</li>
    <li><b>Stage 10: </b> Trajectory Inference</li>
@@ -692,6 +693,34 @@ Report consists on a HTML with some figures/tables resulting from the analysis.
 
 ## Scanpy interoperability
 As described in bollito documentation, and maintained in this new workflow, AnnData files are generated throughout the workflow in order to allow users to perform downstream analyses using [**Scanpy**](https://scanpy.readthedocs.io/en/stable/) and other Python softwares. Compatible outputs are extracted after Cell clustering. *A second compatible output is yet to be extracted including repertoire data, but not implemented yet.
+
+## Sequencing technology options
+Compatible sequencing technologies are detailed at config.yaml files. ***crocketa*** is designed to employ *STAR* alignment whenever possible, whose arguments are already defined for ***10x*** technology, versions 1-3; drop-seq technology, and any custom sequencing technology requiring for specific arguments can be manually added by user (e.g. *Novogene*, etc).
+
+***CMO multiplexed*** data can also be analysed, currently only availabl through cellranger analysis (define *10x* technology as "CMO").
+
+```
+-- config.yaml file --
+# "10x", "Drop-seq" or "custom" if input_type is fastq.
+# "10x" or "standard" if input_type is matrix.
+technology: "10x"  
+
+# technology_version: only if using 10x technology (fastq) - v1-3 / cmo
+technology_version: "v2"
+[...
+]
+      10x:
+            v1:
+                "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 10  --soloCBlen 14 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM"
+            v2:
+                "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 10 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM"
+            v3:
+                "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 12 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM"
+        drop-seq:
+            "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 8 --soloCBlen 12 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM" 
+        custom:
+            "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen N --soloCBlen N --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM" 
+```
 
 ## Known Issues
 * Azimuth is not working due to updates in code, set to *FALSE* until update.
