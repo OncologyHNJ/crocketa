@@ -43,6 +43,8 @@ ref:
     idx: "/path/to/ref/add_your_ref_index/" # STAR aligner index path (auto generated if not already present)
     cellranger_ann: "/path/to/ref/references_cellranger/refdata-gex-GRCh38-2024-A"
     cellranger_vdj: "/path/to/ref/references_cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-7.1.0"
+    cmo_reference: NULL
+    cmo_ids: NULL
 
 # barcodes whitelist (10x only)
 whitelist: "/path/to/res/whitelists/737K-august-2016.txt"  
