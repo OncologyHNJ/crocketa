@@ -10,7 +10,7 @@ class ansitxt:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
 
-print(f"\n{ansitxt.BOLD}{ansitxt.RED}Starting CROCKETA Analysis... \n{ansitxt.ENDC}")
+print(f"\n{ansitxt.BOLD}{ansitxt.RED}Starting CROCKETA Analysis -- Soria-Alcaide Gonzalo\n{ansitxt.ENDC}")
 
 print(f"""
     )     (       )
@@ -118,19 +118,32 @@ def process_samples(samples):
 def get_optional_repertoire_input(wc):
     file = []
     samples = process_samples([u.sample for u in units.itertuples()])
-    if config["parameters"]["seurat_scRepertoire"]["enabled"] == True:
-        file = expand("{OUTDIR}/seurat/{sample}/4_scRepertoire/seurat_scRepertoire.rds", sample=samples,OUTDIR=OUTDIR)
+    if config["parameters"]["seurat_annotation"]["enabled"] == True:
+        file = expand("{OUTDIR}/seurat/{sample}/4_annotation/seurat_annotated_scanvi.rds", sample=samples,OUTDIR=OUTDIR)
         file = list(set(file))
     else:
         file = expand("{OUTDIR}/seurat/{sample}/3_clustering/seurat_find-clusters.rds", sample=samples,OUTDIR=OUTDIR)
         file = list(set(file))
     return file      
 
+def get_optional_postAnn_input(wc):
+    file = []
+    samples = process_samples([u.sample for u in units.itertuples()])
+    if config["parameters"]["seurat_annotation"]["enabled"] == True:
+        if config["parameters"]["seurat_scRepertoire"]["enabled"] == True:
+            file = expand("{OUTDIR}/seurat/{sample}/5_scRepertoire/seurat_scRepertoire.rds", sample=samples,OUTDIR=OUTDIR)
+        else:
+            file = expand("{OUTDIR}/seurat/{sample}/4_annotation/seurat_annotated_scanvi.rds", sample=samples,OUTDIR=OUTDIR)
+        file = list(set(file))
+    else:
+        file = expand("{OUTDIR}/seurat/{sample}/3_clustering/seurat_find-clusters.rds", sample=samples,OUTDIR=OUTDIR)
+        file = list(set(file))
+    return file  
 
 def get_output_degs(wc):
     if config["parameters"]["seurat_degs"]["enabled"] == True:
         samples = process_samples([u.sample for u in units.itertuples()])
-        file = expand("{OUTDIR}/seurat/{sample}/5_degs/seurat_degs.rds", sample=samples,OUTDIR=OUTDIR)
+        file = expand("{OUTDIR}/seurat/{sample}/6_degs/seurat_degs.rds", sample=samples,OUTDIR=OUTDIR)
     else:
         file = []
     return file
@@ -216,7 +229,7 @@ def get_merge_input(wc):
 def get_output_repertoire(wc):
     if config["parameters"]["seurat_scRepertoire"]["enabled"] == True:
         samples = process_samples([u.sample for u in units.itertuples()])
-        file = expand("{OUTDIR}/seurat/{sample}/4_scRepertoire/seurat_scRepertoire.rds",sample=samples,OUTDIR=OUTDIR)
+        file = expand("{OUTDIR}/seurat/{sample}/5_scRepertoire/seurat_scRepertoire.rds",sample=samples,OUTDIR=OUTDIR)
     else:
         file = []
     return file
@@ -224,7 +237,7 @@ def get_output_repertoire(wc):
 def get_output_annotation_Azimuth(wc):
     if config["parameters"]["seurat_annotation_AZIMUTH"]["enabled"] == True:
         samples = process_samples([u.sample for u in units.itertuples()])
-        file = expand("{OUTDIR}/seurat/{sample}/6_annotation/9.4.1_Azimuth_annotation.tsv",sample=samples,OUTDIR=OUTDIR)
+        file = expand("{OUTDIR}/seurat/{sample}/4_annotation/9.4.1_Azimuth_annotation.tsv",sample=samples,OUTDIR=OUTDIR)
     else:
         file = []
     return file
@@ -232,7 +245,7 @@ def get_output_annotation_Azimuth(wc):
 def get_output_annotation(wc):
     if config["parameters"]["seurat_annotation"]["enabled"] == True:
         samples = process_samples([u.sample for u in units.itertuples()])
-        file = expand("{OUTDIR}/seurat/{sample}/6_annotation/seurat_annotated.rds",sample=samples,OUTDIR=OUTDIR)
+        file = expand("{OUTDIR}/seurat/{sample}/4_annotation/seurat_annotated_scanvi.rds",sample=samples,OUTDIR=OUTDIR)
     else:
         file = []
     return file
@@ -263,7 +276,7 @@ def do_velocity(wc):
     elif config["input_type"] == "fastq":
         if config["parameters"]["velocyto"]["enabled"] == True:
             samples = process_samples([u.sample for u in units.itertuples()])
-            file = expand("{OUTDIR}/velocyto/{sample}/10_RNAvelocity/seurat_velocity.rds", sample=samples,OUTDIR=OUTDIR)
+            file = expand("{OUTDIR}/velocyto/{sample}/11_CellRank/seurat_cellrank.h5ad", sample=samples,OUTDIR=OUTDIR)
         else:
             file = []
     else:
@@ -271,17 +284,24 @@ def do_velocity(wc):
     return file 
 
 def get_multiqc(wc):
-    if config["input_type"] == "fastq": 
+    if config["input_type"] == "fastq" and not is_cmo_run(): 
         file = f"{OUTDIR}/qc/multiqc_report.html"
     else: 
         file = []
     return file
-    
+
+def is_cmo_run():
+    tech = config["technology_version"]
+    return "cmo" in tech.lower()
+
 def seurat_input(wc): 
     if config["input_type"] == "matrix": 
         file = []
-    elif config["input_type"] == "fastq":
-        file = f"{OUTDIR}/star/{{sample}}/Solo.out/Gene/Summary.csv"
+    if config["input_type"] == "fastq":
+        if is_cmo_run():
+            file = f"{OUTDIR}/cellranger/{wc.sample}/{wc.sample}_cellR/outs/config.csv"
+        else:
+            file = f"{OUTDIR}/star/{{sample}}/Solo.out/Gene/Summary.csv"
     return file
     
 def get_output_normalization(wc):
@@ -294,18 +314,13 @@ def get_output_find_clus(wc):
     file = expand("{OUTDIR}/seurat/{sample}/3_clustering/seurat_find-clusters.rds", sample=samples,OUTDIR=OUTDIR)
     return file
 
-def get_anndata_check(wc):
-    samples = process_samples([u.sample for u in units.itertuples()])
-    file = expand("{OUTDIR}/scanpy/{sample}/check.txt", sample=samples,OUTDIR=OUTDIR)
-    return file
-
 def get_output_qc(wc):
     samples = [u.sample for u in units.itertuples()] 
     if config["parameters"]["seurat_merge"]["enabled"] == True:
         samples = samples + ['merged']
     file = expand("{OUTDIR}/seurat/{sample}/1_preprocessing/seurat_post-qc.rds", sample=samples,OUTDIR=OUTDIR)
-    return file    
-
+    return file  
+     
 
 rule all:
     input:
@@ -315,17 +330,16 @@ rule all:
         get_merge,
         get_multiqc,
         get_output_find_clus,
+        get_output_annotation_Azimuth,
+        get_output_annotation,
+        get_output_repertoire,
         get_output_degs, 
         get_output_gs,
         get_output_ti,
         get_output_fa,
-        get_output_repertoire,
-        get_output_annotation_Azimuth,
-        get_output_annotation,
         get_output_gspreranked,
         do_velocity,
-        get_velocity_matrices,
-        get_anndata_check
+        get_velocity_matrices
 
 
 rule expression_matrix:
@@ -359,7 +373,10 @@ report: "report/conf/report.rst"
 
 ##### load other rules #####
 include: "rules/cellranger_vdj.smk"
-include: "rules/align.smk"
-include: "rules/qc.smk"
 include: "rules/analyse.smk"
-include: "rules/velocyto.smk"
+if not is_cmo_run():
+    include: "rules/align.smk"
+    include: "rules/qc.smk"
+    include: "rules/velocyto.smk"
+else:
+    print("CMO run detected → STAR alignment will be skipped")
