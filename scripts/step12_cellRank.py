@@ -1,5 +1,4 @@
 # conda install -c conda-forge cellrank
-## seria a continuacion de velocity, y cogiendo su output: 
 # conda install -c conda-forge r-base r-seurat anndata scanpy
 # pip install anndata2ri
 
@@ -101,7 +100,6 @@ genes = list(r('rownames(seu)'))
 # Import metadata
 with localconverter(robjects.default_converter + pandas2ri.converter):
   meta_data = r('seu@meta.data')
-  # Asegurar conversión a pandas
   if not isinstance(meta_data, pd.DataFrame):
     meta_data = pandas2ri.rpy2py(meta_data)
 
