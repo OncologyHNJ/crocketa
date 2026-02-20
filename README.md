@@ -165,6 +165,10 @@ As expression data can be provided in different formats, there are different way
 | Column *3* | **fq1**        	| FASTQ file for read 1, containing the Cell Barcode and UMI.  	|
 | Column *4* | **fq2**        	| FASTQ file for read 2, containing the transcriptomic sequence.       	|
 
+When ***CMO*** multiplexed samples are analysed, 2 additonal columns are required for units.tsv:
+| Column *5* | **fq1_cmo**        	| FASTQ file for read 1 CMO.  	|
+| Column *6* | **fq2_cmo**        	| FASTQ file for read 2 CMO.       	|
+
 * Matrix file format (standard or 10x):
 
 | **Column** | **Field name**            	| **Description**|
@@ -381,9 +385,92 @@ Cell clustering is performed in a standard way, applying user-defined statistica
 <br clear="right"/>
 </details>
 
-### STEP 6. scRepertoire analysis
+### STEP 6. Cell Annotation
 <details>
 <summary><i>Step 6...</i></summary>
+
+To annotate cells, there are automatic tools to perform the labeling of the cells. However, these are highly biased depending on the single-cell data employed as reference. Because of that, it is highly recommended to:
+* 1- Perform automatic analysis employing more than one tool or reference.
+* 2- Manually curate annotation checking the expression of marker genes and signatures described in previous literature (step 9.A).
+
+In this step, automatic annotation approach is performed through *scType* as the only required step, with a further classification of the non-recognised ambiguous cellular fractions through a minimal *scANVI* implementation. optionally *SingleR* and *Azimuth* can also be applied to cross-validate labels.
+
+> TIP: Only apply *singleR* if you know which dataset might be optimal for your specific analysis or cellular dataset.
+
+<img src="./.figs/.res/5-scType_ann.png" align="right" width="350"/>
+
+***[scType](https://github.com/IanevskiAleksandr/sc-type)*** is a computational method that enables a fully-automated and ultra-fast cell-type identification based uniquely on a given scRNA-seq data, along with a comprehensive cell marker database as background information.
+
+Coding in the script follows [Bioconductor vignette](https://github.com/IanevskiAleksandr/sc-type) analysis, where we annotate our single-cell data with the scType reference database specifying (if known) the tissue of origin of the samples.
+This reference is loaded from ref/ScTypeDB.xslx and can be easily edited by the user to add cell types, markers, or tissues. The provided file already includes some subpopulations that were not previously defined in the original reference.
+
+scType analysis can be performed with the full reference or can be restricted to any cell type if we are **extremely** sure that all our cells are subtypes of the same cells (for example, T-cells or B-cells) setting restrict_REF_scType patterns, e.g. "T cells|T-like", "B cells|B-like"
+
+<br clear="right"/>
+
+
+***[SingleR](https://github.com/dviraran/SingleR)*** is a well-known computational method for unbiased cell type recognition of scRNA-seq. SingleR leverages reference transcriptomic datasets of pure cell types to infer the cell of origin of each of the single cells independently.
+
+Coding in the script follows [BioConductor vignette](https://bioconductor.org/packages/release/bioc/vignettes/SingleR/inst/doc/SingleR.html) analysis, where single-cell data (defined as ***sceG***) is annotated according to a reference dataset (defined as ***sceM***).
+
+There are several datasets depending on the organism, tissue of interest or cells of interest. Datasets can be extracted from two main sources: [scRNAseq R package](https://bioconductor.org/packages/3.17/data/experiment/vignettes/scRNAseq/inst/doc/scRNAseq.html) where datasets are specified in section 2; or [celldex R package](https://bioconductor.org/packages/3.17/data/experiment/vignettes/celldex/inst/doc/userguide.html) where we have general-purpose references (*section 2*) or Immune-specific references (*section 3*).
+
+It is highly recommended to run the same analysis with more than one reference to check if results are robust, as the analysis might be biased to those labels depicted in each reference assay (not all cell references have the same cell identities).
+
+More than one reference dataset can be analyzed per run, providing the function to load the data and the metadata label where cell types are specified for each of the provided datasets.
+
+Additionally, [***Azimuth software***](https://azimuth.hubmapconsortium.org/) is also included. This is performed as a separate analysis step as it requires *Seurat V5*.
+
+*SingleR* and *Azimuth* softwares can be ignored setting their parameters in *config.yaml* file to *NULL* or *FALSE* respectively.
+
+In addition to annotation softwares, the very first argument in *config.yaml* file allows us to explore a list of genes of interest user-specified, and plot the expression data with typical seurat visualizations (Featureplots, ViolinPlots, Heatmaps). Output is saved to **1.1.Expression_check_interest.pdf**. Gene signatures can also be explored if specified in *gmx_dir* (*gmx* format)
+
+#### INPUT
+The following parameters of this step need to be adjusted via the configuration file:
+
+* Set *enabled* to *True*.
+
+* Define cluster resolution to analyze.
+
+* For ***scType*** **analysis**, define *tissue_scType*. If tissue of origin is not known, set this parameter to *NULL* and it will be automatically inferred. Otherwise specify one of the following: ***Immune system***, Pancreas, Liver, Eye, Kidney, Brain, Lung, Adrenal, Heart, Intestine, Muscle, Placenta, Spleen, Stomach, Thymus, IR-Immune system (same as Immune system but more specific for 5' sequencing data).
+* For ***SingleR*** **analysis**, define reference datasets (*ref_singleR*) and label name (*label_singleR*) per dataset. NULL if skipped.
+* For ***Azimuth*** **analysis**, as it is performed in a different step of the analysis, we need to:
+    * Set *enabled* to *True*.
+    * Define cluster resolution to analyze.
+    * Define reference dataset name to install and employ (default: "pbmcref")
+
+#### OUTPUT
+The output of this analysis will be stored in the **{OUTDIR}/seurat/merged/4_annotation/** where several files are provided with the results described for *scType*, *SingleR* & *Azimuth* scripts. Also, some tables are written accordingly for some of these steps. 
+Results of *SingleR* analysis are created per reference specified in config file.
+Additionally, some barplots graphics are created in order to see annotation statistics per cluster (to assess robustness of annotation).
+Annotation final results are plotted in scType_annotation.pdf, SingleR_annotation_{ref_function}.pdf & Azimuth_annotation_perCell.pdf
+
+Results are calculated per cell and expanded to cluster resolution to label groups according to specified resolutions.
+
+* Seurat object is generated: seurat_annotated.rds 
+
+Summary of outputs:
+
+* **1.1-** Visualize gene expression of interest
+* **2-** *scType* annotation
+    * 2.1 - per-cluster population scores (.xlsx) and barplots (.pdf)
+    * 2.2 - Featureplots of reference signatures to check gene signature expression
+    * 2.3 - scType annotation results
+    * 2.4 - optional summary graph
+* **3-** *SingleR* annotation (per provided reference & per selected clustering resolution)
+    * 3.1 - Annotation diagnostics (check singleR vignette)
+    * 3.2 - per-Cell annotation results
+    * 3.3 - Annotation barplot per cluster
+    * 3.4 - per-Cluster summary annotation results
+* **4-** *Azimuth* annotation
+    * 4.1 - Annotation per cell
+    * 4.2 - Barplots to check annotation results per cluster.
+
+</details>
+
+### STEP 7. scRepertoire analysis
+<details>
+<summary><i>Step 7...</i></summary>
 
 The scRepertoire script is developed based on the coding script provided as a **[vignette](https://www.borch.dev/uploads/vignette/vignette)** of the original package. Several results considered of interest have been added to the script provided within this pipeline.
 
@@ -401,9 +488,9 @@ If you already have these files, or input format is *matrix*, cellranger might b
 							              └── {sample_B}_filtered_contig_annotations.csv
 ```
 #### OUTPUT
-The output of this analysis will be stored in the **<OUTDIR>/seurat/merged/4_scRepertoire/** where several pdf files are provided with results considered of interest to describe as best as possible clonetype data. Also, some tables are written accordingly for some of these steps. In addition, seurat_scRepertoire.rds object will be provided for further transcriptional analysis downstream.
+The output of this analysis will be stored in the **<OUTDIR>/seurat/merged/5_scRepertoire/** where several pdf files are provided with results considered of interest to describe as best as possible clonetype data. Also, some tables are written accordingly for some of these steps. In addition, seurat_scRepertoire.rds object will be provided for further transcriptional analysis downstream.
 
-First of all, viral annotation will be performed through **[Immunarch](https://github.com/immunomind/immunarch)** R software, and a second single-cell assay only considering non-viral clones is created (Non_Viral). This could be meaningful in the investigation of non-viral diseases such as cancer. Anyway, results are extracted for both assays (original full assay and non viral) and stored in the corresponding directory: e.g. *{outdir}/seurat/merged/4_scRepertoire/Full_assay/* or *{outdir}/4_scRepertoire/Non_Viral_assay/*. In addition, more than one condition of interest may be specified for the analysis.
+First of all, viral annotation will be performed through **[Immunarch](https://github.com/immunomind/immunarch)** R software, and a second single-cell assay only considering non-viral clones is created (Non_Viral). This could be meaningful in the investigation of non-viral diseases such as cancer. Anyway, results are extracted for both assays (original full assay and non viral) and stored in the corresponding directory: e.g. *{outdir}/seurat/merged/5_scRepertoire/Full_assay/* or *{outdir}/5_scRepertoire/Non_Viral_assay/*. In addition, more than one condition of interest may be specified for the analysis.
 
 * Intermediate seurat object is generated: seurat_scRepertoire.rds
 * Non viral object is also stored: seurat_scRepertoire.noViral.rds
@@ -484,102 +571,19 @@ Some of the major outputs are:
 
 </details>
 
-> NOTE: From this step onward, all stages requiring a *Seurat* input file are optional and independent. Therefore, all of them will employ the *.rds* output from either the find-clusters step (****{outdir}/seurat/merged/3_clustering/seurat_find-clusters.rds***) or the repertoire analysis step *if enabled* (****{outdir}/seurat/merged/4_scRepertoire/seurat_scRepertoire.rds***) instead of generating intermediary seurat objects.
+> NOTE: From this step onward, all stages requiring a *Seurat* input file are optional and independent. Therefore, all of them will employ the *.rds* output from either the annotation step (****{outdir}/seurat/merged/4_annotation/seurat_annotated_scanvi.rds***) or the repertoire analysis step *if enabled* (****{outdir}/seurat/merged/5_scRepertoire/seurat_scRepertoire.rds***) instead of generating intermediary seurat objects.
 
-### STEP 7. Marker extraction (*Differential Expression Analysis, DEA*)
+### STEP 8. Marker extraction (*Differential Expression Analysis, DEA*)
 <details>
-<summary><i>Step 7...</i></summary>
+<summary><i>Step 8...</i></summary>
 
 In the next step it is possible to extract markers from each subset of cells defined: clusters for a specific resolution or identities for a specific metadata column.
 
-For each condition, different results are extracted and stored at {outdir}/seurat/merged/4_degs/{condition}:
+For each condition, different results are extracted and stored at {outdir}/seurat/merged/6_degs/{condition}:
 
 * ***Heatmap*** & ***FeaturePlot*** for the top5 differentially expressed genes per condition level.
 * column-formatted tables containing unfiltered and filtered differentially expressed genes.
 * ***.rnk*** files with all genes per condition level, needed for GSEApreranked approach.
-
-</details>
-
-### STEP 8. Cell Annotation
-<details>
-<summary><i>Step 8...</i></summary>
-
-To annotate cells, there are automatic tools to perform the labeling of the cells. However, these are highly biased depending on the single-cell data employed as reference. Because of that, it is highly recommended to:
-* 1- Perform automatic analysis employing more than one tool or reference.
-* 2- Manually curate annotation checking the expression of marker genes and signatures described in previous literature (step 9.1).
-
-In this step, automatic annotation approach is performed through *scType* as the only required step, with a further classification of the non-recognised ambiguous cellular fractions through a minimal *scANVI* implementation. optionally *SingleR* and *Azimuth* can also be applied to cross-validate labels.
-
-> TIP: Only apply *singleR* if you know which dataset might be optimal for your specific analysis or cellular dataset.
-
-<img src="./.figs/.res/5-scType_ann.png" align="right" width="350"/>
-
-***[scType](https://github.com/IanevskiAleksandr/sc-type)*** is a computational method that enables a fully-automated and ultra-fast cell-type identification based uniquely on a given scRNA-seq data, along with a comprehensive cell marker database as background information.
-
-Coding in the script follows [Bioconductor vignette](https://github.com/IanevskiAleksandr/sc-type) analysis, where we annotate our single-cell data with the scType reference database specifying (if known) the tissue of origin of the samples.
-This reference is loaded from ref/ScTypeDB.xslx and can be easily edited by the user to add cell types, markers, or tissues. The provided file already includes some subpopulations that were not previously defined in the original reference.
-
-scType analysis can be performed with the full reference or can be restricted to any cell type if we are **extremely** sure that all our cells are subtypes of the same cells (for example, T-cells or B-cells) setting restrict_REF_scType patterns, e.g. "T cells|T-like", "B cells|B-like"
-
-<br clear="right"/>
-
-
-***[SingleR](https://github.com/dviraran/SingleR)*** is a well-known computational method for unbiased cell type recognition of scRNA-seq. SingleR leverages reference transcriptomic datasets of pure cell types to infer the cell of origin of each of the single cells independently.
-
-Coding in the script follows [BioConductor vignette](https://bioconductor.org/packages/release/bioc/vignettes/SingleR/inst/doc/SingleR.html) analysis, where single-cell data (defined as ***sceG***) is annotated according to a reference dataset (defined as ***sceM***).
-
-There are several datasets depending on the organism, tissue of interest or cells of interest. Datasets can be extracted from two main sources: [scRNAseq R package](https://bioconductor.org/packages/3.17/data/experiment/vignettes/scRNAseq/inst/doc/scRNAseq.html) where datasets are specified in section 2; or [celldex R package](https://bioconductor.org/packages/3.17/data/experiment/vignettes/celldex/inst/doc/userguide.html) where we have general-purpose references (*section 2*) or Immune-specific references (*section 3*).
-
-It is highly recommended to run the same analysis with more than one reference to check if results are robust, as the analysis might be biased to those labels depicted in each reference assay (not all cell references have the same cell identities).
-
-More than one reference dataset can be analyzed per run, providing the function to load the data and the metadata label where cell types are specified for each of the provided datasets.
-
-Additionally, [***Azimuth software***](https://azimuth.hubmapconsortium.org/) is also included. This is performed as a separate analysis step as it requires *Seurat V5*.
-
-*SingleR* and *Azimuth* softwares can be ignored setting their parameters in *config.yaml* file to *NULL* or *FALSE* respectively.
-
-In addition to annotation softwares, the very first argument in *config.yaml* file allows us to explore a list of genes of interest user-specified, and plot the expression data with typical seurat visualizations (Featureplots, ViolinPlots, Heatmaps). Output is saved to **1.1.Expression_check_interest.pdf**. Gene signatures can also be explored if specified in *gmx_dir* (*gmx* format)
-
-#### INPUT
-The following parameters of this step need to be adjusted via the configuration file:
-
-* Set *enabled* to *True*.
-
-* Define cluster resolution to analyze.
-
-* For ***scType*** **analysis**, define *tissue_scType*. If tissue of origin is not known, set this parameter to *NULL* and it will be automatically inferred. Otherwise specify one of the following: ***Immune system***, Pancreas, Liver, Eye, Kidney, Brain, Lung, Adrenal, Heart, Intestine, Muscle, Placenta, Spleen, Stomach, Thymus, IR-Immune system (same as Immune system but more specific for 5' sequencing data).
-* For ***SingleR*** **analysis**, define reference datasets (*ref_singleR*) and label name (*label_singleR*) per dataset. NULL if skipped.
-* For ***Azimuth*** **analysis**, as it is performed in a different step of the analysis, we need to:
-    * Set *enabled* to *True*.
-    * Define cluster resolution to analyze.
-    * Define reference dataset name to install and employ (default: "pbmcref")
-
-#### OUTPUT
-The output of this analysis will be stored in the **{OUTDIR}/seurat/merged/6_annotation/** where several files are provided with the results described for *scType*, *SingleR* & *Azimuth* scripts. Also, some tables are written accordingly for some of these steps. 
-Results of *SingleR* analysis are created per reference specified in config file.
-Additionally, some barplots graphics are created in order to see annotation statistics per cluster (to assess robustness of annotation).
-Annotation final results are plotted in scType_annotation.pdf, SingleR_annotation_{ref_function}.pdf & Azimuth_annotation_perCell.pdf
-
-Results are calculated per cell and expanded to cluster resolution to label groups according to specified resolutions.
-
-* Seurat object is generated: seurat_annotated.rds 
-
-Summary of outputs:
-
-* **1.1-** Visualize gene expression of interest
-* **2-** *scType* annotation
-    * 2.1 - per-cluster population scores (.xlsx) and barplots (.pdf)
-    * 2.2 - Featureplots of reference signatures to check gene signature expression
-    * 2.3 - scType annotation results
-    * 2.4 - optional summary graph
-* **3-** *SingleR* annotation (per provided reference & per selected clustering resolution)
-    * 3.1 - Annotation diagnostics (check singleR vignette)
-    * 3.2 - per-Cell annotation results
-    * 3.3 - Annotation barplot per cluster
-    * 3.4 - per-Cluster summary annotation results
-* **4-** *Azimuth* annotation
-    * 4.1 - Annotation per cell
-    * 4.2 - Barplots to check annotation results per cluster.
 
 </details>
 
