@@ -11,6 +11,8 @@ print("CONFIGURATION STEP")
 import os
 import random
 import numpy as np
+import matplotlib
+matplotlib.use("Agg") # avoid internal errors related to graphical devices
 import cellrank as cr
 import anndata2ri
 import scanpy as sc
@@ -24,8 +26,6 @@ scv.settings.verbosity = 3
 scv.settings.set_figure_params("scvelo")
 cr.settings.verbosity = 2
 import warnings
-import matplotlib
-matplotlib.use("Agg") # avoid internal errors related to graphical devices
 import matplotlib.pyplot as plt
 from cellrank.estimators import GPCCA
 
