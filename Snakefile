@@ -283,16 +283,16 @@ def do_velocity(wc):
         file = []
     return file 
 
+def is_cmo_run():
+    tech = config["technology_version"]
+    return "cmo" in tech.lower()
+
 def get_multiqc(wc):
     if config["input_type"] == "fastq" and not is_cmo_run(): 
         file = f"{OUTDIR}/qc/multiqc_report.html"
     else: 
         file = []
     return file
-
-def is_cmo_run():
-    tech = config["technology_version"]
-    return "cmo" in tech.lower()
 
 def seurat_input(wc): 
     if config["input_type"] == "matrix": 
