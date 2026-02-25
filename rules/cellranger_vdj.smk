@@ -14,15 +14,15 @@ rule cellranger_input:
         output_dir = f"{OUTDIR}/cellranger/{{sample}}/",
         sample_i=f"{{sample}}",
         cmo_ids=config["ref"]["cmo_ids"],
-        cmo_refSet=config["ref"]["cmo_reference"]
+        cmo_refSet=config["ref"]["cmo_reference"],
+        is_cmo = lambda wildcards: is_cmo_run()
     shell:"""
     file_count=$( find "./scripts/" -name  "cellranger-7.2.0*" -type d | wc -l )
     if [[ $file_count -le 0 ]]; then
-    	echo "installing cellranger-7.2.0 for first time"
-        wget -O ./scripts/cellranger-7.2.0.tar.gz "https://cf.10xgenomics.com/releases/cell-exp/cellranger-7.2.0.tar.gz?Expires=1738980243&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA&Signature=TiB3~mGzxSIomToV7ef5SXuT2isc6vg1BF0zSWoNMyQVut9SN9et8wm~~JZIVrJGe~shgPKwahprNrDIEpdceVITeoqrC3WsbtZUuJL~fvVOcd3-NZdTpj~ZSOBucxrCGoxtZA9kmxNka1TRIGO1wcmaAm~8x2emu7x5Jlq-loko-Ex~BX1ziyuBGMrs4E-jZYzfSulWaFCVo1DCoSoS04lrprGg0O3h6c5w5dLp5HGooJmPyuUOjZunri-gb7lZ2iHR6iJc9kHFv3b-WeN4R83IYLFt-nH1Tb0uMaJd~FiQMVkiVYb9ZtTtUO95U~0CVrCjrHBoZ~~qLxVmrrQs-w__"
-        tar -xzvf scripts/cellranger-7.2.0.tar.gz --directory=scripts/
+    	echo "required cellranger-7.2.0 installation"
+    	exit 1
     fi
-    bash ./scripts/cellranger_writeCSV.sh {params.ref_GEX} {params.ref_VDJ} {input.samples_path} {params.units_path} {params.output_dir} {params.sample_i} {params.cmo_ids} {params.cmo_refSet} &> {log}
+    bash ./scripts/cellranger_writeCSV.sh {params.ref_GEX} {params.ref_VDJ} {input.samples_path} {params.units_path} {params.output_dir} {params.sample_i} {params.cmo_ids} {params.cmo_refSet}  {params.is_cmo}&> {log}
     """
 
 rule cellranger:
