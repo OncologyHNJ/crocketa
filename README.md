@@ -692,7 +692,8 @@ Report consists on a HTML with some figures/tables resulting from the analysis.
 </p>
 
 ## Scanpy interoperability
-As described in bollito documentation, and maintained in this new workflow, AnnData files are generated throughout the workflow in order to allow users to perform downstream analyses using [**Scanpy**](https://scanpy.readthedocs.io/en/stable/) and other Python softwares. Compatible outputs are extracted after Cell clustering. *A second compatible output is yet to be extracted including repertoire data, but not implemented yet.
+AnnData files are generated throughout the workflow in order to allow users to perform downstream analyses using [**Scanpy**](https://scanpy.readthedocs.io/en/stable/) and other Python softwares. Compatible outputs are extracted after Annotation step. *A second compatible output is yet to be extracted including repertoire data, but not implemented yet.
+An addiitonal Scanpy compatible object regarding velocity analyses is also provided to be further analysed if wished, right after velocyto/CellRank analysis step.
 
 ## Sequencing technology options
 Compatible sequencing technologies are detailed at config.yaml files. ***crocketa*** is designed to employ *STAR* alignment whenever possible, whose arguments are already defined for ***10x*** technology, versions 1-3; drop-seq technology, and any custom sequencing technology requiring for specific arguments can be manually added by user (e.g. *Novogene*, etc).
