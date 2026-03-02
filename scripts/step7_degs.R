@@ -117,7 +117,7 @@ lapply(selected_cond, function(cond){
       # 8.2. DE includying all genes - needed for a GSEA analysis. 
       if (ranking){
         for (i in 1:length(unique(Idents(seurat)))){
-          clusterX.markers <- FindMarkers(seurat, ident.1 = unique(Idents(seurat))[i], min.pct = 0, logfc.threshold = 0, test.use = test) %>% arrange(desc(avg_log2FC))  #min expressed
+          clusterX.markers <- FindMarkers(seurat, ident.1 = unique(Idents(seurat))[i], min.pct = 0.1, logfc.threshold = 0, test.use = test) %>% arrange(desc(avg_log2FC))  #min expressed, only remove noise for further pathway analysis
           wb <- createWorkbook()
           addWorksheet(wb, "DE analysis")
           writeData(wb, "DE analysis", clusterX.markers, rowNames = TRUE)
