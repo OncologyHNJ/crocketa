@@ -133,8 +133,8 @@ lapply(selected_cond, function(cond){
           
           # 8.2.1. Create RNK file. 
           rnk = NULL
-          rnk = as.matrix(clusterX.markers[,2])
-          rownames(rnk)= row.names(clusterX.markers)
+          degs_pops_rnk <- clusterX.markers %>% filter(pct.1 > 0.1 | pct.2 > 0.1) 
+		  rnk = as.matrix(degs_pops_rnk[,2])
           write.table(rnk, file = paste0(dir.name, "/", folders[6], "/", cond, "/cluster", unique(Idents(seurat))[i],".rnk"), sep = "\t", col.names = FALSE, quote = FALSE)
         }
         message("3. All genes DEG and RNK file were finished.")
