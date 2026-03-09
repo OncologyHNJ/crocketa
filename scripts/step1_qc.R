@@ -1,5 +1,3 @@
-# edit to cvheck for souporcell results! line 130-
-
 log <- file(snakemake@log[[1]], open = "wt")
 sink(log)
 sink(log, type = "message")
@@ -103,7 +101,7 @@ if (input_type == "fastq") {
 expression_matrix <- expression_matrix[, colSums(expression_matrix != 0) > 100] # Take into account cells with more than 100 counts, since CreateSeuratObject function breaks.
 seurat = CreateSeuratObject(expression_matrix, project = sample, min.features = 1, min.cells = min_cells_per_gene)
 message("2. Seurat object was created.")
-write.table(colnames(seurat), paste0(dir.name, "/", folders[1], "/barcodes.tsv"), sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
+
 # 1.1 Add metadata from samples.tsv file.  
 samples_file = read.table(samples_path, sep = "\t", row.names = 1, header = TRUE)
 if (is_cmo){ # demultiplexing assigns specific CMO IDs to each demultiplexed cell according to sample
@@ -120,145 +118,39 @@ if (is_cmo){ # demultiplexing assigns specific CMO IDs to each demultiplexed cel
   
   seurat$CMO.id <- as.character(seurat$Assignment)
 	seurat$multiplex_class <- dplyr::case_when(
-		is.na(seurat$Assignment)          ~ "No_CMO_Data", # 'raw' cells with no cmo data
+		is.na(seurat$Assignment)          ~ "No_CMO_Data", # Células del 'raw' sin señal de CMO
 		seurat$Assignment == "Multiplet" ~ "Multiplet",
 		seurat$Assignment == "Blank"     ~ "Blank",
 		seurat$Assignment == "Unassigned"~ "Unassigned",
 		TRUE                             ~ "Singlet"
 	)
+
+
 	
-	# souporcell results
-	# load clusters.tsv
-	#multiplexing stats: rescued AND/OR non-rescued methods
-	generate_mtpx_stats <- function(seurat_obj, col_name, suffix, output_dir, folders) {
-		message(paste0("Generating stats for: ", col_name))
-		
-		cells_before <- as.data.frame(table(seurat_obj[[col_name]]))
-		colnames(cells_before) <- c("Class_ID", "Before_filter")
-		
-		if (col_name == "CMO.id") {
-		  is_singlet <- seurat_obj$multiplex_class == "Singlet"
-		} else {
-		  invalid_labels <- c("unassigned", "Multiplet", "Blank", "No_Genotype_Data", "Dropped", "Conflict_Discard", "Doublet_Genotype")
-		  is_singlet <- !(seurat_obj[[col_name]][,1] %in% invalid_labels)
-		}
-		
-		cells_after <- as.data.frame(table(seurat_obj[[col_name]][is_singlet, ]))
-		colnames(cells_after) <- c("Class_ID", "After_filter")
-		
-
-		summary_table <- dplyr::left_join(cells_before, cells_after, by = "Class_ID")
-		summary_table[is.na(summary_table)] <- 0
-		total_row <- data.frame(
-		  Class_ID = "TOTAL", 
-		  Before_filter = sum(summary_table$Before_filter), 
-		  After_filter = sum(summary_table$After_filter)
-		)
-		summary_table <- rbind(summary_table, total_row)
-		
-		summary_table$Retention_pct <- round((summary_table$After_filter / summary_table$Before_filter) * 100, 2)
-		summary_table[is.na(summary_table)] <- 0 # Por si hay divisiones por cero
-		
-		file_path <- paste0(output_dir, "/", folders[1], "/0.1_Demultiplexing_stats_", suffix, ".tsv")
-		write.table(summary_table, file = file_path, sep = "\t", row.names = FALSE, quote = FALSE)
-		
-		return(summary_table)
-	}
-	clusters_file <- file.path(dirname(data_dir), "../../../../souporcell/clusters.tsv") 
-	if (file.exists(clusters_file)) {
-		message("run Souporcell software to rescue Unassigned cells")
-		clusters_data <- read.table(clusters_file, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-		rownames(clusters_data) <- clusters_data$barcode
-
-		common_cells <- intersect(colnames(seurat), clusters_data$barcode)
-		message(paste("Common barcodes: ", length(common_cells)))
-
-		# add 'soupAssign' column as metadata
-		seurat <- AddMetaData(
-				object = seurat, 
-				metadata = clusters_data[common_cells, "assignment", drop = FALSE], 
-				col.name = "soupAssign"
-		)
-		seurat$soupAssign <- as.character(seurat$soupAssign)
-
-		### compare and map cellranger w/ soup assignments:
-		comparison_table <- table(
-				CellRanger_CMO = seurat$CMO.id, 
-				Soup_Assignment = seurat$soupAssign, 
-				useNA = "ifany"
-		)
-		write.table(comparison_table, 
-				        file = paste0(dir.name, "/", folders[1], "/0.3-Comparison_CMO_vs_Soup.tsv"), 
-				        sep = "\t", quote = FALSE, row.names=TRUE, col.names = NA)
-				        
-		# map CMO IDs with soup clustering     
-		valid_cmo_rows <- setdiff(unique(seurat$CMO.id), c("Unassigned", "Multiplet", "Blank", "No_CMO_Data", "Dropped", NA))
-		unique_soup_vals <- unique(seurat$soupAssign)
-		soup_singlets_ids <- unique_soup_vals[!grepl("/", unique_soup_vals) & !is.na(unique_soup_vals)]
-		tab <- table(
-				seurat$CMO.id[seurat$CMO.id %in% valid_cmo_rows & seurat$soupAssign %in% soup_singlets_ids], 
-				seurat$soupAssign[seurat$CMO.id %in% valid_cmo_rows & seurat$soupAssign %in% soup_singlets_ids]
-		)
-		
-		mapping <- apply(tab, 2, function(x) {
-		if(sum(x) == 0) return(NA)
-			rownames(tab)[which.max(x)]
-		})
-		seurat$soupAssign_Named <- NA
-		can_map <- as.character(seurat$soupAssign) %in% names(mapping)
-		seurat$soupAssign_Named <- mapping[as.character(seurat$soupAssign)]
-		seurat$soupAssign_Named[can_map] <- mapping[as.character(seurat$soupAssign[can_map])]
-				
-		# Rescue soup-corrected cells: Cellranger 'unassigned' cells with a propper soup result
-		seurat$CMO.id_Rescued <- seurat$CMO.id
-		to_rescue <- which(seurat$CMO.id == "Unassigned" & !is.na(seurat$soupAssign_Named))
-
-		seurat$CMO.id_Rescued[to_rescue] <- seurat$soupAssign_Named[to_rescue]
-
-		message(paste("Unassigned cells rescued: ", length(to_rescue)))
-		
-		if(length(to_rescue) > 0) {
-    	seurat$CMO.id_Rescued[to_rescue] <- seurat$soupAssign_Named[to_rescue]
-		}
-
-		final_comparison <- table(Original = seurat$CMO.id, Rescued = seurat$CMO.id_Rescued)
-		write.table(final_comparison, 
-				        file = paste0(dir.name, "/", folders[1], "/0.2-Final_Rescue_Summary.tsv"), row.names=TRUE, col.names = NA,
-				        sep = "\t", quote = FALSE)
-			# Souporcell correction: Rescued stats
-		stats_rescued <- generate_mtpx_stats(
-				seurat_obj = seurat, 
-				col_name = "CMO.id_Rescued", 
-				suffix = "rescued_soup", 
-				output_dir = dir.name, 
-				folders = folders
-		)
-	}
-	
-	
-	# CellRanger stats filtering ---
-	stats_original <- generate_mtpx_stats(
-		  seurat_obj = seurat, 
-		  col_name = "CMO.id", 
-		  suffix = "cellranger", 
-		  output_dir = dir.name, 
-		  folders = folders
+	# filtering based on multiplexing: only singlets must be retained
+	cells_before_mtpx <- as.data.frame(table(seurat$CMO.id))
+	colnames(cells_before_mtpx) <- c("Class_ID", "Before_demultiplex_filter")
+	seurat <- subset(seurat, subset = multiplex_class == "Singlet") # if I only keep singlets, I may miss a lot of information?
+	# unassigned cells are valid QC cells with uncertain CMO presence
+	'
+	seurat <- subset(
+		seurat,
+		subset = Assignment != "Multiplet" & Assignment != "Blank"
 	)
-
-	message("Demultiplexing stats (original and rescued) were generated.")
-	
-	# Final filtering
-	if (file.exists(clusters_file)) {
-		keep_idx <- !(seurat@meta.data$CMO.id_Rescued %in% c("Unassigned", "Blank", "Multiplet"))
-		seurat <- seurat[, keep_idx]
-	} else {
-		keep_idx <- !(seurat@meta.data$CMO.id %in% c("Unassigned", "Blank", "Multiplet"))
-		seurat <- seurat[, keep_idx]
-	}
-
-	message("Demultiplexing finished")
+	'
+	cells_after_mtpx <- as.data.frame(table(seurat$CMO.id))
+	colnames(cells_after_mtpx) <- c("Class_ID", "After_demultiplex_filter")
+	summary_table <- left_join(cells_before_mtpx, cells_after_mtpx, by = "Class_ID")
+	summary_table[is.na(summary_table)] <- 0 # replace NAs
+	total_row <- data.frame(Class_ID = "TOTAL", 
+		Before_demultiplex_filter = sum(summary_table$Before_demultiplex_filter), 
+		After_demultiplex_filter = sum(summary_table$After_demultiplex_filter))
+	summary_table <- rbind(summary_table, total_row)
+	# retention pct
+	summary_table$Retention_pct <- round((summary_table$After_demultiplex_filter/summary_table$Before_demultiplex_filter) * 100, 2)
+	write.table(summary_table, file = paste0(dir.name, "/", folders[1], "/0_Demultiplexing_stats.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
+	message("Demultiplexing applied")
 } 
-
 if (dim(samples_file)[2] != 0){
 	for (i in 5:length(colnames(samples_file))) {
 	  seurat <- AddMetaData(seurat, samples_file[sample, i], col.name = colnames(samples_file)[i])
