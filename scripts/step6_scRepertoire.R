@@ -1099,7 +1099,7 @@ for (x.cond in cond){
 														TOPsums <- TOPsums %>% 
 																group_by(subset, condition) %>%
 																summarise(total_count = sum(Count), .groups = 'drop') %>% rowwise() %>%
-																mutate("rel_value" = total_count/totaldf[totaldf[["subset"]] == subset, "maxcount"]) %>%
+																mutate("rel_value" = total_count/totaldf[as.character(totaldf[["subset"]]) == as.character(subset), "maxcount"]) %>%
 																mutate(rel_value = ifelse(is.na(rel_value), 0, rel_value)) %>% as.data.frame()
 														if (nrow(TOPsums) == 0) {
 															message("-- No TOP clones for these conditions")
