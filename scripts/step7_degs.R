@@ -133,7 +133,7 @@ lapply(selected_cond, function(cond){
           
           # 8.2.1. Create RNK file. 
           rnk = NULL
-          degs_pops_rnk <- clusterX.markers %>% filter(pct.1 > 0.1 | pct.2 > 0.1) 
+          degs_pops_rnk <- clusterX.markers %>% filter(p_val_adj < 0.05 | (pct.1 > 0.1 | pct.2 > 0.1)) # filter noisy genes (low expressed) for gsea preranked
 		  rnk = as.matrix(degs_pops_rnk[,2])
           write.table(rnk, file = paste0(dir.name, "/", folders[6], "/", cond, "/cluster", unique(Idents(seurat))[i],".rnk"), sep = "\t", col.names = FALSE, quote = FALSE)
         }
