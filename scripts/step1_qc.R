@@ -118,7 +118,7 @@ if (is_cmo){ # demultiplexing assigns specific CMO IDs to each demultiplexed cel
   
   seurat$CMO.id <- as.character(seurat$Assignment)
 	seurat$multiplex_class <- dplyr::case_when(
-		is.na(seurat$Assignment)          ~ "No_CMO_Data", # Células del 'raw' sin señal de CMO
+		is.na(seurat$Assignment)          ~ "No_CMO_Data",
 		seurat$Assignment == "Multiplet" ~ "Multiplet",
 		seurat$Assignment == "Blank"     ~ "Blank",
 		seurat$Assignment == "Unassigned"~ "Unassigned",
