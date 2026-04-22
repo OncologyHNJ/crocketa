@@ -62,7 +62,7 @@ if [[ -z "$sample_vdj_B" || "$sample_vdj_B" == "NULL" || -z "$vdj_fqPATH_B" || "
 	prefix_B="# "
 fi
 prefix_CMO=""
-if [[ -z "$sample_CMO" || "$sample_CMO" == "NULL" || -z "$CMO_fqPATH" || "$CMO_fqPATH" == "NULL" ]]; then
+if [[ -z "$sample_CMO" || "$sample_CMO" == "NULL" || "$sample_CMO" == "None" || -z "$CMO_fqPATH" || "$CMO_fqPATH" == "NULL" || "$CMO_fqPATH"  == "None" ]]; then
 	prefix_CMO="# "
 fi
 echo ${prefix_B}
