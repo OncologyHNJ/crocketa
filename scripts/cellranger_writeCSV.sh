@@ -39,12 +39,17 @@ sample_vdj_B=$(awk -v sample="$sample_i" -F '\t' '$1 == sample {print $3}' "$sam
 echo ${sample_vdj_B}
 
 ### CMO Multiplexing
-# field for MPX fastq files is $6 (SAMPLES.TSV)
-CMO_fqPATH=$(awk -v sample="$sample_i" -F '\t' '$1 == sample {print $7}' "$samples_path" | sort | uniq)
-echo ${CMO_fqPATH}
-# field for vdj-T sample name is $7 (SAMPLES.TSV)
-sample_CMO=$(awk -v sample="$sample_i" -F '\t' '$1 == sample {print $6}' "$samples_path" | sort | uniq)
-echo ${sample_CMO}
+# field for MPX fastq files is $6 (SAMPLES.TSV) if wished
+if [[ "$mpx_assignment" == "None" || "$mpx_assignment" == "NULL" || -z "$mpx_assignment" ]]; then
+    CMO_fqPATH="NULL"
+    sample_CMO="NULL"
+else
+    CMO_fqPATH=$(awk -v sample="$sample_i" -F '\t' '$1 == sample {print $7}' "$samples_path" | sort | uniq)
+    echo ${CMO_fqPATH}
+    sample_CMO=$(awk -v sample="$sample_i" -F '\t' '$1 == sample {print $6}' "$samples_path" | sort | uniq)
+    echo ${sample_CMO}
+fi
+
 
 # if any TCR|BCR is not computed, column must be = NULL, then sample is commented and skipped - add '#' beforehand
 prefix_T=""
