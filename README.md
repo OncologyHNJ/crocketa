@@ -30,7 +30,7 @@
 
 *Jorge García-Martínez*
 
-###### Citation: [DOI 10.1101/2025.05.16.654451](https://doi.org/10.1101/2025.05.16.654451)
+###### Citation: [DOI 10.1186/s12864-026-12767-y](https://doi.org/10.1186/s12864-026-12767-y)
 
 ## Introduction
 
