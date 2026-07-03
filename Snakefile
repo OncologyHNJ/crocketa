@@ -79,7 +79,7 @@ def get_resource(rule,resource):
 
 def get_output_doubletfinder(wc):
     if config["parameters"]["seurat_DoubletFinder"]["enabled"] == True:
-        samples = process_samples([u.sample for u in units.itertuples()])
+        samples = list(set([u.sample for u in units.itertuples()]))
         file = expand("{OUTDIR}/seurat/{sample}/1_preprocessing/seurat_post-qc_singlet.rds", sample=samples,OUTDIR=OUTDIR)
     else:
         file = []
