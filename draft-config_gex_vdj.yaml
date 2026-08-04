@@ -13,7 +13,7 @@ input_type: "fastq"
 technology: "10x"  
 
 # technology_version: only if using 10x technology (fastq) - v1-3 / cmo
-technology_version: "v2"
+technology_version: "v2_5p"
 
 # Output and log files paths
 outdir: "/path/to/vdj_gex_out"
@@ -153,8 +153,10 @@ parameters:
         10x:
             v1:
                 "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 10  --soloCBlen 14 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM"
-            v2:
+            v2_3p:
                 "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 10 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM"
+            v2_5p:
+                "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50  --soloStrand Reverse --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 10 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM"
             v3:
                 "--soloType Droplet --soloFeatures Gene Velocyto --outFilterMultimapNmax 50 --winAnchorMultimapNmax 50 --alignEndsType EndToEnd --outReadsUnmapped Fastx --soloUMIlen 12 --outSAMtype BAM SortedByCoordinate --outSAMattributes NH HI nM AS CR UR CB UB GX GN sS sQ sM"
         drop-seq:
